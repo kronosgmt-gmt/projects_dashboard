@@ -83,7 +83,7 @@ def load_data_from_csv(file_path):
             st.success("✅ Loaded data from local file (latin1)")
 
     if df is None:
-        urls = ["https://raw.githubusercontent.com/kronosgmt-gmt/projects_dashboard/main/data/projects.csv"]
+        urls = ["https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"]
         for url in urls:
             st.info(f"Trying GitHub: {url}")
             df = load_data_from_url(url)
