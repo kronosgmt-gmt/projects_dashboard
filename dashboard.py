@@ -13,18 +13,6 @@ import requests
 # Cloudinary configuration
 CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
 
-# Color mapping for project types (definido globalmente)
-color_map = {
-    'Commercial': '#1f77b4',
-    'Residential': '#ff7f0e', 
-    'Industrial': '#2ca02c',
-    'Government': '#d62728',
-    'Non-Profit': '#9467bd',
-    'Educational': '#8c564b',
-    'Healthcare': '#e377c2',
-    'Other': '#7f7f7f'
-}
-
 # Page configuration
 st.set_page_config(
     page_title="Kronos GMT Project's Dashboard",
@@ -78,6 +66,20 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+def get_project_type_colors(customer_types):
+    """Generate color mapping for project types."""
+    colors = [
+        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+        '#ff9999', '#66b3ff', '#99ff99', '#ffcc99', '#ff99cc'
+    ]
+    
+    color_mapping = {}
+    for i, customer_type in enumerate(customer_types):
+        color_mapping[customer_type] = colors[i % len(colors)]
+    
+    return color_mapping
 
 def is_valid_cloudinary_url(url, cloud_name=None):
     """Validate if a URL is a valid Cloudinary URL."""
@@ -205,14 +207,6 @@ def load_data_from_csv(file_path):
             valid_images = df['Image'].apply(lambda x: is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME)).sum()
             st.info(f"🖼️ Found {valid_images} valid Cloudinary images out of {len(df)} projects")
         
-        # Update color map with actual customer types from data
-        unique_types = df['Customer_Type'].unique()
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-        global color_map
-        for i, customer_type in enumerate(unique_types):
-            if customer_type not in color_map:
-                color_map[customer_type] = colors[i % len(colors)]
-        
         return df
     except Exception as e:
         st.error(f"❌ Error processing CSV data: {str(e)}")
@@ -278,10 +272,8 @@ def create_kpi_cards(df):
         </div>
         """, unsafe_allow_html=True)
 
-def create_interactive_map(df):
-    """Create interactive map with project locations."""
-    global color_map  # Ensure access to global color_map
-    
+def create_project_map(df):
+    """Create interactive map with project locations - no caching."""
     if df.empty:
         st.warning("⚠️ No project locations available for the selected filters.")
         return None
@@ -294,6 +286,10 @@ def create_interactive_map(df):
 
     # Debug information
     st.info(f"🗺️ Creating map with {len(valid_df)} projects")
+    
+    # Create color mapping for project types
+    unique_types = valid_df['Customer_Type'].unique()
+    type_colors = get_project_type_colors(unique_types)
     
     # Calculate map center
     center_lat = valid_df['Latitude'].mean()
@@ -323,29 +319,10 @@ def create_interactive_map(df):
     marker_cluster = MarkerCluster().add_to(m)
     placeholder_image = "https://via.placeholder.com/150x90?text=No+Image"
 
-    # Create local color mapping to ensure it exists
-    local_color_map = {
-        'Commercial': '#1f77b4',
-        'Residential': '#ff7f0e', 
-        'Industrial': '#2ca02c',
-        'Government': '#d62728',
-        'Non-Profit': '#9467bd',
-        'Educational': '#8c564b',
-        'Healthcare': '#e377c2',
-        'Other': '#7f7f7f'
-    }
-    
-    # Update with actual customer types from data
-    unique_types = valid_df['Customer_Type'].unique()
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-    for i, customer_type in enumerate(unique_types):
-        if customer_type not in local_color_map:
-            local_color_map[customer_type] = colors[i % len(colors)]
-
     # Add markers
     for idx, row in valid_df.iterrows():
         # Get color for this project type
-        marker_color = local_color_map.get(row['Customer_Type'], '#gray')
+        marker_color = type_colors.get(row['Customer_Type'], '#gray')
         
         # Create popup content
         popup_content = f"""
@@ -394,7 +371,7 @@ def create_interactive_map(df):
 
     # Add legend
     legend_items = []
-    for type_name, color in local_color_map.items():
+    for type_name, color in type_colors.items():
         if type_name in valid_df['Customer_Type'].values:
             legend_items.append(f'<div style="display: flex; align-items: center; margin: 2px 0;"><div style="width: 12px; height: 12px; background-color: {color}; border-radius: 50%; margin-right: 8px;"></div><span style="font-size: 12px;">{type_name}</span></div>')
     
@@ -544,7 +521,7 @@ def main():
     
     with col1:
         st.markdown('<div class="section-header">📍 Project Locations</div>', unsafe_allow_html=True)
-        map_obj = create_interactive_map(filtered_df)
+        map_obj = create_project_map(filtered_df)
         if map_obj:
             st_folium(map_obj, width=None, height=500, use_container_width=True)
             st.info("💡 Click on map markers to see project details, images, and blog links!")
