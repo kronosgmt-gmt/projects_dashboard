@@ -77,15 +77,15 @@ def load_data_from_csv(file_path):
     if os.path.exists(file_path):
         try:
             df = pd.read_csv(file_path, encoding='utf-8')
-            st.success("✅ Loaded data from local file")
+            #st.success("✅ Loaded data from local file")
         except UnicodeDecodeError:
             df = pd.read_csv(file_path, encoding='latin1')
-            st.success("✅ Loaded data from local file (latin1)")
+            #st.success("✅ Loaded data from local file (latin1)")
 
     if df is None:
         urls = ["https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"]
         for url in urls:
-            st.info(f"Trying GitHub: {url}")
+            #st.info(f"Trying GitHub: {url}")
             df = load_data_from_url(url)
             if df is not None:
                 break
@@ -165,7 +165,7 @@ def filter_data(df, project_type_filter, service_filter):
     return filtered_df
 
 
-def create_kpi_cards(df):
+"""def create_kpi_cards(df):
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(f"""<div class="metric-card"><h3>📊 Total</h3><h2>{len(df)}</h2></div>""", unsafe_allow_html=True)
@@ -177,7 +177,7 @@ def create_kpi_cards(df):
         st.markdown(f"""<div class="metric-card"><h3>🏢 Clients</h3><h2>{clients}</h2></div>""", unsafe_allow_html=True)
     with col4:
         current = len(df[df['year'] == datetime.now().year]) if 'year' in df.columns else 0
-        st.markdown(f"""<div class="metric-card"><h3>📅 This Year</h3><h2>{current}</h2></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div class="metric-card"><h3>📅 This Year</h3><h2>{current}</h2></div>""", unsafe_allow_html=True)"""
 
 
 @st.cache_resource
@@ -204,7 +204,7 @@ def create_interactive_map(df):
     center_lat = df['Latitude'].mean()
     center_lon = df['Longitude'].mean()
 
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=10)
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=6)
 
     for _, row in df.iterrows():
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
@@ -307,7 +307,7 @@ def main():
 
     st.markdown('<div class="section-header">📋 Projects</div>', unsafe_allow_html=True)
     if not filtered_df.empty:
-        display_cols = ['Project_Name', 'Customer_Type', 'year', 'Client', 'Department']
+        display_cols = ['Project_Name', 'Customer_Type', 'Service_2', 'Scope of work', 'year']
         available_cols = [c for c in display_cols if c in filtered_df.columns]
         st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
     else:
