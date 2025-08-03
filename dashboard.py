@@ -267,7 +267,7 @@ def main():
     if df is None or df.empty:
         st.stop()
 
-    st.success(f"✅ Loaded {len(df)} projects")
+    #st.success(f"✅ Loaded {len(df)} projects")
 
     service_options = create_service_mapping(df)
 
