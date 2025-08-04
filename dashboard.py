@@ -261,7 +261,7 @@ def display_project_gallery(df):
 
 
 def main():
-    st.markdown('<h1 class="main-header">📊 Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header"> Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
     df = load_data_from_csv("projects.csv")
     if df is None or df.empty:
