@@ -165,7 +165,7 @@ def filter_data(df, project_type_filter, service_filter):
     return filtered_df
 
 
-"""def create_kpi_cards(df):
+def create_kpi_cards(df):
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(f"""<div class="metric-card"><h3>📊 Total</h3><h2>{len(df)}</h2></div>""", unsafe_allow_html=True)
@@ -177,7 +177,7 @@ def filter_data(df, project_type_filter, service_filter):
         st.markdown(f"""<div class="metric-card"><h3>🏢 Clients</h3><h2>{clients}</h2></div>""", unsafe_allow_html=True)
     with col4:
         current = len(df[df['year'] == datetime.now().year]) if 'year' in df.columns else 0
-        st.markdown(f"""<div class="metric-card"><h3>📅 This Year</h3><h2>{current}</h2></div>""", unsafe_allow_html=True)"""
+        st.markdown(f"""<div class="metric-card"><h3>📅 This Year</h3><h2>{current}</h2></div>""", unsafe_allow_html=True)
 
 
 @st.cache_resource
