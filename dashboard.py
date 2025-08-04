@@ -64,7 +64,7 @@ def load_data_from_url(url):
         response.raise_for_status()
         content = io.StringIO(response.text)
         df = pd.read_csv(content, encoding='utf-8')
-        st.success(f"✅ Loaded data from URL: {url}")
+        #st.success(f"✅ Loaded data from URL: {url}")
         return df
     except Exception as e:
         st.warning(f"⚠️ Failed to load from URL: {str(e)}")
