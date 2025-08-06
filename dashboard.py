@@ -165,20 +165,7 @@ def filter_data(df, project_type_filter, service_filter):
     return filtered_df
 
 
-def create_kpi_cards(df):
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown(f"""<div class="metric-card"><h3>📊 Total</h3><h2>{len(df)}</h2></div>""", unsafe_allow_html=True)
-    with col2:
-        completed = len(df[df['Status'].str.contains('Done', na=False)]) if 'Status' in df.columns else 0
-        st.markdown(f"""<div class="metric-card"><h3>✅ Done</h3><h2>{completed}</h2></div>""", unsafe_allow_html=True)
-    with col3:
-        clients = df['Client'].nunique() if 'Client' in df.columns else 0
-        st.markdown(f"""<div class="metric-card"><h3>🏢 Clients</h3><h2>{clients}</h2></div>""", unsafe_allow_html=True)
-    with col4:
-        current = len(df[df['year'] == datetime.now().year]) if 'year' in df.columns else 0
-        st.markdown(f"""<div class="metric-card"><h3>📅 This Year</h3><h2>{current}</h2></div>""", unsafe_allow_html=True)
-
+#los KPI estaban aqui y fueron eliminados
 
 @st.cache_resource
 def create_interactive_map(df):
@@ -257,7 +244,7 @@ def display_project_gallery(df):
         with col:
             st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
             if pd.notna(p.get('Blog_Link')):
-                st.markdown(f"[📖 Read More about this project]({p['Blog_Link']})")
+                st.markdown(f"[📖 See More about this project]({p['Blog_Link']})")
 
 
 def main():
