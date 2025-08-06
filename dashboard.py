@@ -85,7 +85,7 @@ def load_data_from_csv(file_path):
     if df is None:
         urls = ["https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"]
         for url in urls:
-            #st.info(f"Trying GitHub: {url}")
+            st.info(f"Trying GitHub: {url}")
             df = load_data_from_url(url)
             if df is not None:
                 break
