@@ -257,7 +257,7 @@ def display_project_gallery(df):
         with col:
             st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
             if pd.notna(p.get('Blog_Link')):
-                st.markdown(f"[📖]({p['Blog_Link']})")
+                st.markdown(f"[📖 Read More about this project]({p['Blog_Link']})")
 
 
 def main():
