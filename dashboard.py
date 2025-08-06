@@ -275,7 +275,7 @@ def main():
     else:
         st.write(f"Showing {len(filtered_df)} projects")
 
-    create_kpi_cards(filtered_df)
+    #create_kpi_cards(filtered_df)
 
     col1, col2 = st.columns([2, 1])
     with col1:
