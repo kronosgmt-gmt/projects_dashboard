@@ -294,7 +294,7 @@ def main():
 
     st.markdown('<div class="section-header">📋 Projects</div>', unsafe_allow_html=True)
     if not filtered_df.empty:
-        display_cols = ['Project_Name', 'Scope of work']
+        display_cols = ['Project_Name', 'Scope of work', 'Blog_Link']
         available_cols = [c for c in display_cols if c in filtered_df.columns]
         st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
     else:
