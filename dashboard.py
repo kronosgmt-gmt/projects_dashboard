@@ -28,8 +28,8 @@ st.markdown("""
     .main-header { font-size: 2.5rem; font-weight: bold; color: #07b9d1; text-align: center; margin-bottom: 2rem; }
     .metric-card { background-color: #2c3e50; padding: 1rem; border-radius: 10px; border-left: 5px solid #07b9d1; margin-bottom: 1rem; }
     .filter-section { background-color: #34495e; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
-    .stSelectbox > label { font-weight: bold; color: #ffffff; }
-    .section-header { font-size: 1.5rem; font-weight: bold; color: #ffffff; margin: 1rem 0; border-bottom: 2px solid #07b9d1; padding-bottom: 0.5rem; }
+    .stSelectbox > label { font-weight: bold; color: #1a252f; }
+    .section-header { font-size: 1.5rem; font-weight: bold; color: #1a252f; margin: 1rem 0; border-bottom: 2px solid #07b9d1; padding-bottom: 0.5rem; }
     .cloudinary-image { max-width: 20vw; height: auto; object-fit: cover; border-radius: 5px; cursor: pointer; }
     .nav-button {
         display: block;
@@ -37,7 +37,7 @@ st.markdown("""
         padding: 10px;
         margin: 5px 0;
         background-color: #34495e;
-        color: #ffffff;
+        color: #1a252f;
         text-decoration: none;
         border-radius: 5px;
         text-align: center;
@@ -50,7 +50,7 @@ st.markdown("""
     .nav-button:hover {
         background-color: #2c3e50;
         font-weight: bold;
-        color: #ffffff;
+        color: #1a252f;
         text-decoration: none; /* Remove underline on hover */
     }
     .logo-container {
