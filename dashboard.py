@@ -25,11 +25,11 @@ st.set_page_config(
 # Custom CSS with dark mode
 st.markdown("""
 <style>
-    .main-header { font-size: 2.5rem; background-color: #93c47d; font-weight: bold; color: #ffffff; text-align: center; margin-bottom: 2rem; }
+    .main-header { font-size: 2.5rem; background-color: #2c3e50; font-weight: bold; color: #ffffff; text-align: center; margin-bottom: 2rem; }
     .metric-card { background-color: #2c3e50; padding: 1rem; border-radius: 10px; border-left: 5px solid #07b9d1; margin-bottom: 1rem; }
     .filter-section { background-color: #34495e; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
     .stSelectbox > label { font-weight: bold; color: #1a252f; }
-    .section-header { font-size: 1.5rem; font-weight: bold; color: #07b9d1; margin: 1rem 0; border-bottom: 2px solid #93c47d; padding-bottom: 0.5rem; }
+    .section-header { font-size: 1.5rem; font-weight: bold; color: #07b9d1; margin: 1rem 0; border-bottom: 2px solid #2c3e50; padding-bottom: 0.5rem; }
     .cloudinary-image { max-width: 20vw; height: auto; object-fit: cover; border-radius: 5px; cursor: pointer; }
     .nav-button {
         display: block;
