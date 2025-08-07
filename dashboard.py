@@ -205,7 +205,7 @@ def create_interactive_map(df):
             weight=1
         ).add_to(m)
 
-    legend_html = '<div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: white; border: 2px solid grey; z-index: 9999; padding: 10px; border-radius: 5px;">'
+    legend_html = '<div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: #1a252f; border: 2px solid grey; z-index: 9999; padding: 10px; border-radius: 5px;">'
     legend_html += '<p><b>Legend</b></p>'
     for t, c in color_map.items():
         legend_html += f'<p><i class="fa fa-circle" style="color:{c}"></i> {t}</p>'
