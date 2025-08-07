@@ -235,7 +235,7 @@ def display_project_gallery(df):
             if pd.notna(p.get('Blog_Link')):
                 st.markdown(f"[📖 See More about this project]({p['Blog_Link']})")
 
-def create_navigation_sidebar():
+def create_navigation_sidebar(df):
     with st.sidebar:
         st.markdown("### 🎛️ Filters")
         types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
@@ -282,7 +282,7 @@ def main():
 
     service_options = create_service_mapping(df)
 
-    create_navigation_sidebar()
+    create_navigation_sidebar(df)
     
     filtered_df = filter_data(df, selected_type, selected_service)
 
