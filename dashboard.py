@@ -288,6 +288,9 @@ def main():
         selected_service = st.selectbox("🌎 Service", services, index=0)
         st.button("Reset Filters", on_click=lambda: st.rerun())
 
+
+        st.markdown("---")
+
     filtered_df = filter_data(df, selected_type, selected_service)
 
     if filtered_df.empty:
@@ -295,13 +298,10 @@ def main():
     else:
         st.write(f"Showing {len(filtered_df)} projects")
         
-
-        st.markdown("---")
-
     
-    
-
     create_navigation_sidebar()
+
+    
 
     col1, col2 = st.columns([2, 1])
     with col1:
