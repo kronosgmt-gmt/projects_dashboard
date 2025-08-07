@@ -25,7 +25,7 @@ st.set_page_config(
 # Custom CSS with dark mode
 st.markdown("""
 <style>
-    .main-header { font-size: 2.5rem; font-weight: bold; color: #07b9d1; text-align: center; margin-bottom: 2rem; }
+    .main-header { font-size: 2.5rem; background-color: #07b9d1; font-weight: bold; color: #ffffff; text-align: center; margin-bottom: 2rem; }
     .metric-card { background-color: #2c3e50; padding: 1rem; border-radius: 10px; border-left: 5px solid #07b9d1; margin-bottom: 1rem; }
     .filter-section { background-color: #34495e; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
     .stSelectbox > label { font-weight: bold; color: #1a252f; }
@@ -37,7 +37,7 @@ st.markdown("""
         padding: 10px;
         margin: 5px 0;
         background-color: #34495e;
-        color: #1a252f;
+        color: #ffffff;
         text-decoration: none;
         border-radius: 5px;
         text-align: center;
