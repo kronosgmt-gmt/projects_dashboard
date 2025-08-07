@@ -22,12 +22,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS with dark mode and gradient background
+# Custom CSS with dark mode
 st.markdown("""
 <style>
     .main-header { font-size: 2.5rem; font-weight: bold; color: #93c47d; text-align: center; margin-bottom: 2rem; }
-    .metric-card { background-color: #2a2a72; padding: 1rem; border-radius: 10px; border-left: 5px solid #93c47d; margin-bottom: 1rem; }
-    .filter-section { background-color: #4b0082; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
+    .metric-card { background-color: #2c3e50; padding: 1rem; border-radius: 10px; border-left: 5px solid #93c47d; margin-bottom: 1rem; }
+    .filter-section { background-color: #34495e; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
     .stSelectbox > label { font-weight: bold; color: #93c47d; }
     .section-header { font-size: 1.5rem; font-weight: bold; color: #ffffff; margin: 1rem 0; border-bottom: 2px solid #93c47d; padding-bottom: 0.5rem; }
     .cloudinary-image { max-width: 20vw; height: auto; object-fit: cover; border-radius: 5px; cursor: pointer; }
@@ -36,7 +36,7 @@ st.markdown("""
         width: 100%;
         padding: 10px;
         margin: 5px 0;
-        background-color: #4b0082;
+        background-color: #34495e;
         color: #ffffff;
         text-decoration: none;
         border-radius: 5px;
@@ -46,7 +46,7 @@ st.markdown("""
         font-size: 14px;
     }
     .nav-button:hover {
-        background-color: #2a2a72;
+        background-color: #2c3e50;
         color: #ffffff;
         text-decoration: none;
     }
@@ -54,14 +54,12 @@ st.markdown("""
         text-align: center;
         margin-bottom: 20px;
     }
-    /* Background gradient inspired by the image */
     .stApp {
-        background: linear-gradient(135deg, #2a2a72, #4b0082);
+        background-color: #1a252f;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Rest of the code remains unchanged...
 def get_project_type_colors(customer_types):
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     valid_types = [t for t in customer_types if pd.notna(t)]
@@ -244,7 +242,7 @@ def create_navigation_sidebar():
         st.markdown("""
         <div class="logo-container">
             <a href="https://kronosgmt.com" target="_blank">
-                <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754540320/Logos_Kronos_PNG-04_nxdbz3.png" 
+                <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754538826/Logos_Kronos_JPG-04_pgxlhl.png" 
                      style="width: 200px; height: auto; border-radius: 10px; cursor: pointer;">
             </a>
         </div>
