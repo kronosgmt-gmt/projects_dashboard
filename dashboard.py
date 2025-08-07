@@ -22,49 +22,198 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Custom CSS - Kronos GMT Dark Theme
 st.markdown("""
 <style>
-    .main-header { font-size: 2.5rem; font-weight: bold; color: #1f77b4; text-align: center; margin-bottom: 2rem; }
-    .metric-card { background-color: #93c47d; padding: 1rem; border-radius: 10px; border-left: 5px solid #1f77b4; margin-bottom: 1rem; }
-    .filter-section { background-color: #ffffff; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .stSelectbox > label { font-weight: bold; color: #1f77b4; }
-    .section-header { font-size: 1.5rem; font-weight: bold; color: #2c3e50; margin: 1rem 0; border-bottom: 2px solid #1f77b4; padding-bottom: 0.5rem; }
-    .cloudinary-image { max-width: 20vw; height: auto; object-fit: cover; border-radius: 5px; cursor: pointer; }
+    /* Tema Dark Global */
+    .stApp {
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+        color: #ffffff;
+    }
     
-    /* Estilos para la navegación */
+    /* Main content area */
+    .main .block-container {
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+        color: #ffffff;
+        padding-top: 2rem;
+    }
+    
+    /* Header principal con gradiente Kronos */
+    .main-header { 
+        font-size: 3rem; 
+        font-weight: 900; 
+        background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-align: center; 
+        margin-bottom: 3rem;
+        text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+    }
+    
+    /* Cards mejoradas */
+    .metric-card { 
+        background: linear-gradient(135deg, #1e1e3f 0%, #2a2a5a 100%);
+        padding: 1.5rem; 
+        border-radius: 15px; 
+        border-left: 5px solid #8B5CF6; 
+        margin-bottom: 1rem;
+        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+    
+    /* Sección de filtros */
+    .filter-section { 
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        padding: 1.5rem; 
+        border-radius: 15px; 
+        margin-bottom: 1rem; 
+        box-shadow: 0 8px 32px rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+    }
+    
+    /* Headers de sección */
+    .section-header { 
+        font-size: 1.8rem; 
+        font-weight: bold; 
+        background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 1.5rem 0; 
+        border-bottom: 2px solid #8B5CF6; 
+        padding-bottom: 0.5rem;
+    }
+    
+    /* Sidebar styling */
+    .css-1d391kg {
+        background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 100%);
+    }
+    
+    /* Navegación mejorada */
     .nav-button {
         display: block;
         width: 100%;
-        padding: 10px;
-        margin: 5px 0;
-        background-color: #1f77b4;
+        padding: 12px 16px;
+        margin: 8px 0;
+        background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
         color: white;
         text-decoration: none;
-        border-radius: 5px;
+        border-radius: 10px;
         text-align: center;
         border: none;
         cursor: pointer;
         font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
     }
+    
     .nav-button:hover {
-        background-color: #0d5aa7;
+        background: linear-gradient(135deg, #7C3AED 0%, #0891B2 100%);
         color: white;
         text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
     }
+    
+    /* Logo container */
     .logo-container {
         text-align: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
+        padding: 20px;
+        background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+        border-radius: 15px;
+    }
+    
+    /* Selectbox styling */
+    .stSelectbox > label {
+        font-weight: bold;
+        color: #06B6D4 !important;
+        font-size: 1.1rem;
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #7C3AED 0%, #0891B2 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+    }
+    
+    /* Dataframe styling */
+    .stDataFrame {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    /* Metrics styling */
+    [data-testid="metric-container"] {
+        background: linear-gradient(135deg, #1e1e3f 0%, #2a2a5a 100%);
+        border-radius: 15px;
+        padding: 1rem;
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+    }
+    
+    /* Text styling */
+    .stMarkdown {
+        color: #ffffff;
+    }
+    
+    /* Success/Error messages */
+    .stSuccess {
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+        border-left: 4px solid #22C55E;
+        color: #ffffff;
+    }
+    
+    .stError {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+        border-left: 4px solid #EF4444;
+        color: #ffffff;
+    }
+    
+    /* Images enhancement */
+    .cloudinary-image { 
+        max-width: 20vw; 
+        height: auto; 
+        object-fit: cover; 
+        border-radius: 15px; 
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
+    }
+    
+    .cloudinary-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 48px rgba(139, 92, 246, 0.3);
+    }
+    
+    /* Footer */
+    .css-1dp5vir {
+        color: rgba(255, 255, 255, 0.6);
     }
 </style>
 """, unsafe_allow_html=True)
 
 
 def get_project_type_colors(customer_types):
-    """Generate color mapping for project types."""
+    """Generate color mapping for project types using Kronos GMT color palette."""
+    # Paleta de colores Kronos GMT (púrpuras y cianes)
     colors = [
-        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+        '#8B5CF6', '#06B6D4', '#A855F7', '#0891B2', '#7C3AED', 
+        '#0E7490', '#6366F1', '#0F766E', '#8B5A2B', '#059669'
     ]
     # Remove NaN and convert to list
     valid_types = [t for t in customer_types if pd.notna(t)]
@@ -255,8 +404,23 @@ def create_service_distribution(df):
     if not all_services:
         return None
     counts = pd.Series(all_services).value_counts()
-    fig = px.pie(values=counts.values, names=counts.index, title="Services")
-    fig.update_traces(textinfo='percent+label')
+    
+    # Colores Kronos GMT para el gráfico
+    kronos_colors = ['#8B5CF6', '#06B6D4', '#A855F7', '#0891B2', '#7C3AED', 
+                     '#0E7490', '#6366F1', '#0F766E', '#8B5A2B', '#059669']
+    
+    fig = px.pie(values=counts.values, names=counts.index, title="Services Distribution")
+    fig.update_traces(
+        textinfo='percent+label',
+        marker=dict(colors=kronos_colors[:len(counts)]),
+        textfont_color="white"
+    )
+    fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        font=dict(color="white"),
+        title_font_color="white"
+    )
     return fig
 
 
@@ -283,31 +447,33 @@ def create_navigation_sidebar():
         st.markdown("""
         <div class="logo-container">
             <a href="https://kronosgmt.com" target="_blank">
-                <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754538826/Logos_Kronos_JPG-04_pgxlhl.png" 
+                <img src="https://via.placeholder.com/200x80/1f77b4/ffffff?text=KRONOS+GMT" 
                      style="width: 200px; height: auto; border-radius: 10px; cursor: pointer;">
             </a>
         </div>
         """, unsafe_allow_html=True)
         
-               
+        # Menú de navegación
+        st.markdown("### 🧭 Navigation")
+        
         # Services
         st.markdown("""
-        <a href="https://www.kronosgmt.com/services" target="_blank" class="nav-button">
-            Services
+        <a href="https://kronosgmt.com/services" target="_blank" class="nav-button">
+            🔧 Services
         </a>
         """, unsafe_allow_html=True)
         
         # News
         st.markdown("""
-        <a href="https://news.kronosgmt.com/" target="_blank" class="nav-button">
-            News
+        <a href="https://kronosgmt.com/news" target="_blank" class="nav-button">
+            📰 News
         </a>
         """, unsafe_allow_html=True)
         
         # Contact Us
         st.markdown("""
-        <a href="https://www.kronosgmt.com/#contact" target="_blank" class="nav-button">
-            Contact Us
+        <a href="https://kronosgmt.com/contact" target="_blank" class="nav-button">
+            📞 Contact Us
         </a>
         """, unsafe_allow_html=True)
         
@@ -330,7 +496,7 @@ def main():
     create_navigation_sidebar()
     
     with st.sidebar:
-        #st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+        st.markdown('<div class="filter-section">', unsafe_allow_html=True)
         st.markdown("### 🎛️ Filters")
         types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
         selected_type = st.selectbox("🏢 Type", types, index=0)
