@@ -31,6 +31,31 @@ st.markdown("""
     .stSelectbox > label { font-weight: bold; color: #1f77b4; }
     .section-header { font-size: 1.5rem; font-weight: bold; color: #2c3e50; margin: 1rem 0; border-bottom: 2px solid #1f77b4; padding-bottom: 0.5rem; }
     .cloudinary-image { max-width: 20vw; height: auto; object-fit: cover; border-radius: 5px; cursor: pointer; }
+    
+    /* Estilos para la navegación */
+    .nav-button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        background-color: #1f77b4;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .nav-button:hover {
+        background-color: #0d5aa7;
+        color: white;
+        text-decoration: none;
+    }
+    .logo-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -51,7 +76,7 @@ def is_valid_cloudinary_url(url, cloud_name=None):
         return False
     parsed = urlparse(url)
     if cloud_name:
-        return (parsed.netloc == "res.cloudinary.com" and
+        return (parsed.netlnet == "res.cloudinary.com" and
                 url.startswith(f"https://res.cloudinary.com/{cloud_name}/"))
     return parsed.netloc == "res.cloudinary.com"
 
@@ -74,24 +99,28 @@ def load_data_from_url(url):
 @st.cache_data
 def load_data_from_csv(file_path):
     df = None
-    if os.path.exists(file_path):
-        try:
-            df = pd.read_csv(file_path, encoding='utf-8')
-            #st.success("✅ Loaded data from local file")
-        except UnicodeDecodeError:
-            df = pd.read_csv(file_path, encoding='latin1')
-            #st.success("✅ Loaded data from local file (latin1)")
+    
+    # SECCIÓN COMENTADA: Carga desde archivo CSV local
+    # Esta sección permite cargar datos desde un archivo CSV local
+    # if os.path.exists(file_path):
+    #     try:
+    #         df = pd.read_csv(file_path, encoding='utf-8')
+    #         st.success("✅ Loaded data from local file")
+    #     except UnicodeDecodeError:
+    #         df = pd.read_csv(file_path, encoding='latin1')
+    #         st.success("✅ Loaded data from local file (latin1)")
 
+    # MANTENER SOLO CARGA DESDE GITHUB
     if df is None:
         urls = ["https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"]
         for url in urls:
-            st.info(f"Trying GitHub: {url}")
+            st.info(f"Loading data from GitHub: {url}")
             df = load_data_from_url(url)
             if df is not None:
                 break
 
     if df is None:
-        st.error("❌ Failed to load data.")
+        st.error("❌ Failed to load data from GitHub.")
         return None
 
     # Clean columns
@@ -247,10 +276,51 @@ def display_project_gallery(df):
                 st.markdown(f"[📖 See More about this project]({p['Blog_Link']})")
 
 
+def create_navigation_sidebar():
+    """Crear la navegación en la barra lateral"""
+    with st.sidebar:
+        # Logo clickeable (reemplaza con tu URL real)
+        st.markdown("""
+        <div class="logo-container">
+            <a href="https://kronosgmt.com" target="_blank">
+                <img src="https://via.placeholder.com/200x80/1f77b4/ffffff?text=KRONOS+GMT" 
+                     style="width: 200px; height: auto; border-radius: 10px; cursor: pointer;">
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Menú de navegación
+        st.markdown("### 🧭 Navigation")
+        
+        # Services
+        st.markdown("""
+        <a href="https://kronosgmt.com/services" target="_blank" class="nav-button">
+            🔧 Services
+        </a>
+        """, unsafe_allow_html=True)
+        
+        # News
+        st.markdown("""
+        <a href="https://kronosgmt.com/news" target="_blank" class="nav-button">
+            📰 News
+        </a>
+        """, unsafe_allow_html=True)
+        
+        # Contact Us
+        st.markdown("""
+        <a href="https://kronosgmt.com/contact" target="_blank" class="nav-button">
+            📞 Contact Us
+        </a>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+
+
 def main():
     st.markdown('<h1 class="main-header"> Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
-    df = load_data_from_csv("projects.csv")
+    # MODIFICACIÓN: Comentada la carga desde archivo local, solo desde GitHub
+    df = load_data_from_csv("projects.csv")  # El parámetro se mantiene pero se ignora
     if df is None or df.empty:
         st.stop()
 
@@ -258,6 +328,9 @@ def main():
 
     service_options = create_service_mapping(df)
 
+    # NUEVA BARRA LATERAL CON NAVEGACIÓN Y FILTROS
+    create_navigation_sidebar()
+    
     with st.sidebar:
         st.markdown('<div class="filter-section">', unsafe_allow_html=True)
         st.markdown("### 🎛️ Filters")
