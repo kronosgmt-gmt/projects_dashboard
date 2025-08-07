@@ -14,221 +14,67 @@ import io
 # Cloudinary configuration
 CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
 
-# Page configuration
+# Page configuration with dark mode
 st.set_page_config(
     page_title="Kronos GMT Project's Dashboard",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    theme="dark"
 )
 
-# Custom CSS - Kronos GMT Dark Theme
+# Custom CSS with dark mode and gradient background
 st.markdown("""
 <style>
-    /* Tema Dark Global */
-    .stApp {
-        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-        color: #ffffff;
-    }
-    
-    /* Main content area */
-    .main .block-container {
-        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-        color: #ffffff;
-        padding-top: 2rem;
-    }
-    
-    /* Header principal con gradiente Kronos */
-    .main-header { 
-        font-size: 3rem; 
-        font-weight: 900; 
-        background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        text-align: center; 
-        margin-bottom: 3rem;
-        text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
-    }
-    
-    /* Cards mejoradas */
-    .metric-card { 
-        background: linear-gradient(135deg, #1e1e3f 0%, #2a2a5a 100%);
-        padding: 1.5rem; 
-        border-radius: 15px; 
-        border-left: 5px solid #8B5CF6; 
-        margin-bottom: 1rem;
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
-        border: 1px solid rgba(139, 92, 246, 0.2);
-    }
-    
-    /* Sección de filtros */
-    .filter-section { 
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        padding: 1.5rem; 
-        border-radius: 15px; 
-        margin-bottom: 1rem; 
-        box-shadow: 0 8px 32px rgba(6, 182, 212, 0.1);
-        border: 1px solid rgba(6, 182, 212, 0.2);
-    }
-    
-    /* Headers de sección */
-    .section-header { 
-        font-size: 1.8rem; 
-        font-weight: bold; 
-        background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin: 1.5rem 0; 
-        border-bottom: 2px solid #8B5CF6; 
-        padding-bottom: 0.5rem;
-    }
-    
-    /* Sidebar styling */
-    .css-1d391kg {
-        background: linear-gradient(180deg, #0f0f23 0%, #1a1a2e 100%);
-    }
-    
-    /* Navegación mejorada */
+    .main-header { font-size: 2.5rem; font-weight: bold; color: #93c47d; text-align: center; margin-bottom: 2rem; }
+    .metric-card { background-color: #2a2a72; padding: 1rem; border-radius: 10px; border-left: 5px solid #93c47d; margin-bottom: 1rem; }
+    .filter-section { background-color: #4b0082; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
+    .stSelectbox > label { font-weight: bold; color: #93c47d; }
+    .section-header { font-size: 1.5rem; font-weight: bold; color: #ffffff; margin: 1rem 0; border-bottom: 2px solid #93c47d; padding-bottom: 0.5rem; }
+    .cloudinary-image { max-width: 20vw; height: auto; object-fit: cover; border-radius: 5px; cursor: pointer; }
     .nav-button {
         display: block;
         width: 100%;
-        padding: 12px 16px;
-        margin: 8px 0;
-        background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
-        color: white;
+        padding: 10px;
+        margin: 5px 0;
+        background-color: #4b0082;
+        color: #ffffff;
         text-decoration: none;
-        border-radius: 10px;
+        border-radius: 5px;
         text-align: center;
         border: none;
         cursor: pointer;
         font-size: 14px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
     }
-    
     .nav-button:hover {
-        background: linear-gradient(135deg, #7C3AED 0%, #0891B2 100%);
-        color: white;
+        background-color: #2a2a72;
+        color: #ffffff;
         text-decoration: none;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
     }
-    
-    /* Logo container */
     .logo-container {
         text-align: center;
-        margin-bottom: 25px;
-        padding: 20px;
-        background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
-        border-radius: 15px;
+        margin-bottom: 20px;
     }
-    
-    /* Selectbox styling */
-    .stSelectbox > label {
-        font-weight: bold;
-        color: #06B6D4 !important;
-        font-size: 1.1rem;
-    }
-    
-    /* Button styling */
-    .stButton > button {
-        background: linear-gradient(135deg, #8B5CF6 0%, #06B6D4 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
-        background: linear-gradient(135deg, #7C3AED 0%, #0891B2 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
-    }
-    
-    /* Dataframe styling */
-    .stDataFrame {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        border-radius: 15px;
-        overflow: hidden;
-    }
-    
-    /* Metrics styling */
-    [data-testid="metric-container"] {
-        background: linear-gradient(135deg, #1e1e3f 0%, #2a2a5a 100%);
-        border-radius: 15px;
-        padding: 1rem;
-        border: 1px solid rgba(139, 92, 246, 0.2);
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
-    }
-    
-    /* Text styling */
-    .stMarkdown {
-        color: #ffffff;
-    }
-    
-    /* Success/Error messages */
-    .stSuccess {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
-        border-left: 4px solid #22C55E;
-        color: #ffffff;
-    }
-    
-    .stError {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
-        border-left: 4px solid #EF4444;
-        color: #ffffff;
-    }
-    
-    /* Images enhancement */
-    .cloudinary-image { 
-        max-width: 20vw; 
-        height: auto; 
-        object-fit: cover; 
-        border-radius: 15px; 
-        cursor: pointer;
-        transition: transform 0.3s ease;
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
-    }
-    
-    .cloudinary-image:hover {
-        transform: scale(1.05);
-        box-shadow: 0 12px 48px rgba(139, 92, 246, 0.3);
-    }
-    
-    /* Footer */
-    .css-1dp5vir {
-        color: rgba(255, 255, 255, 0.6);
+    /* Background gradient inspired by the image */
+    .stApp {
+        background: linear-gradient(135deg, #2a2a72, #4b0082);
     }
 </style>
 """, unsafe_allow_html=True)
 
-
+# Rest of the code remains unchanged...
 def get_project_type_colors(customer_types):
-    """Generate color mapping for project types using Kronos GMT color palette."""
-    # Paleta de colores Kronos GMT (púrpuras y cianes)
-    colors = [
-        '#8B5CF6', '#06B6D4', '#A855F7', '#0891B2', '#7C3AED', 
-        '#0E7490', '#6366F1', '#0F766E', '#8B5A2B', '#059669'
-    ]
-    # Remove NaN and convert to list
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     valid_types = [t for t in customer_types if pd.notna(t)]
     return {t: colors[i % len(colors)] for i, t in enumerate(valid_types)}
-
 
 def is_valid_cloudinary_url(url, cloud_name=None):
     if not url or pd.isna(url) or not isinstance(url, str):
         return False
     parsed = urlparse(url)
     if cloud_name:
-        return (parsed.netloc == "res.cloudinary.com" and
-                url.startswith(f"https://res.cloudinary.com/{cloud_name}/"))
+        return (parsed.netloc == "res.cloudinary.com" and url.startswith(f"https://res.cloudinary.com/{cloud_name}/"))
     return parsed.netloc == "res.cloudinary.com"
-
 
 def load_data_from_url(url):
     try:
@@ -244,22 +90,9 @@ def load_data_from_url(url):
         st.warning(f"⚠️ Failed to load from URL: {str(e)}")
         return None
 
-
 @st.cache_data
 def load_data_from_csv(file_path):
     df = None
-    
-    # SECCIÓN COMENTADA: Carga desde archivo CSV local
-    # Esta sección permite cargar datos desde un archivo CSV local
-    # if os.path.exists(file_path):
-    #     try:
-    #         df = pd.read_csv(file_path, encoding='utf-8')
-    #         st.success("✅ Loaded data from local file")
-    #     except UnicodeDecodeError:
-    #         df = pd.read_csv(file_path, encoding='latin1')
-    #         st.success("✅ Loaded data from local file (latin1)")
-
-    # MANTENER SOLO CARGA DESDE GITHUB
     if df is None:
         urls = ["https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"]
         for url in urls:
@@ -272,18 +105,15 @@ def load_data_from_csv(file_path):
         st.error("❌ Failed to load data from GitHub.")
         return None
 
-    # Clean columns
     df.columns = df.columns.str.strip()
     df['Longitude'] = pd.to_numeric(df['Longitude'], errors='coerce')
     df['Latitude'] = pd.to_numeric(df['Latitude'], errors='coerce')
 
-    # Clean Customer_Type
     if 'Customer_Type' in df.columns:
         df['Customer_Type'] = df['Customer_Type'].fillna('Unknown')
     else:
         df['Customer_Type'] = 'Unknown'
 
-    # Clean Service_2
     def clean_services(x):
         if pd.isna(x) or not x:
             return []
@@ -301,14 +131,12 @@ def load_data_from_csv(file_path):
     else:
         df['Service_2_list'] = [[] for _ in range(len(df))]
 
-    # Validate required columns
     required = ['project_id', 'Project_Name', 'Longitude', 'Latitude']
     missing = [col for col in required if col not in df.columns]
     if missing:
         st.error(f"❌ Missing columns: {missing}")
         return None
 
-    # Drop rows with invalid coordinates
     df.dropna(subset=['Longitude', 'Latitude'], inplace=True)
     df = df[(df['Latitude'].between(-90, 90)) & (df['Longitude'].between(-180, 180))]
 
@@ -325,14 +153,12 @@ def load_data_from_csv(file_path):
 
     return df
 
-
 def create_service_mapping(df):
     all_services = set()
     for services in df['Service_2_list']:
         if isinstance(services, list):
             all_services.update(services)
     return sorted([s for s in all_services if s])
-
 
 def filter_data(df, project_type_filter, service_filter):
     filtered_df = df.copy()
@@ -342,30 +168,23 @@ def filter_data(df, project_type_filter, service_filter):
         filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
     return filtered_df
 
-
-#los KPI estaban aqui y fueron eliminados
-
 @st.cache_resource
 def create_interactive_map(df):
     if df.empty or len(df) == 0:
         st.warning("No data to display on map.")
         return None
 
-    # Ensure Customer_Type exists and is clean
     if 'Customer_Type' not in df.columns:
         df['Customer_Type'] = 'Unknown'
 
-    # Remove rows with NaN coordinates
     df = df.dropna(subset=['Latitude', 'Longitude'])
     if df.empty:
         st.warning("No valid coordinates for mapping.")
         return None
 
-    # Create color map
     unique_types = df['Customer_Type'].dropna().unique()
     color_map = get_project_type_colors(unique_types)
 
-    # Center map
     center_lat = df['Latitude'].mean()
     center_lon = df['Longitude'].mean()
 
@@ -386,7 +205,6 @@ def create_interactive_map(df):
             weight=1
         ).add_to(m)
 
-    # Add legend
     legend_html = '<div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: white; border: 2px solid grey; z-index: 9999; padding: 10px; border-radius: 5px;">'
     legend_html += '<p><b>Legend</b></p>'
     for t, c in color_map.items():
@@ -396,7 +214,6 @@ def create_interactive_map(df):
 
     return m
 
-
 def create_service_distribution(df):
     if df.empty:
         return None
@@ -404,25 +221,9 @@ def create_service_distribution(df):
     if not all_services:
         return None
     counts = pd.Series(all_services).value_counts()
-    
-    # Colores Kronos GMT para el gráfico
-    kronos_colors = ['#8B5CF6', '#06B6D4', '#A855F7', '#0891B2', '#7C3AED', 
-                     '#0E7490', '#6366F1', '#0F766E', '#8B5A2B', '#059669']
-    
-    fig = px.pie(values=counts.values, names=counts.index, title="Services Distribution")
-    fig.update_traces(
-        textinfo='percent+label',
-        marker=dict(colors=kronos_colors[:len(counts)]),
-        textfont_color="white"
-    )
-    fig.update_layout(
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color="white"),
-        title_font_color="white"
-    )
+    fig = px.pie(values=counts.values, names=counts.index, title="Services")
+    fig.update_traces(textinfo='percent+label')
     return fig
-
 
 def display_project_gallery(df):
     if 'Image' not in df.columns:
@@ -439,71 +240,55 @@ def display_project_gallery(df):
             if pd.notna(p.get('Blog_Link')):
                 st.markdown(f"[📖 See More about this project]({p['Blog_Link']})")
 
-
 def create_navigation_sidebar():
-    """Crear la navegación en la barra lateral"""
     with st.sidebar:
-        # Logo clickeable (reemplaza con tu URL real)
         st.markdown("""
         <div class="logo-container">
             <a href="https://kronosgmt.com" target="_blank">
-                <img src="https://via.placeholder.com/200x80/1f77b4/ffffff?text=KRONOS+GMT" 
+                <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754538826/Logos_Kronos_JPG-04_pgxlhl.png" 
                      style="width: 200px; height: auto; border-radius: 10px; cursor: pointer;">
             </a>
         </div>
         """, unsafe_allow_html=True)
         
-        # Menú de navegación
-        st.markdown("### 🧭 Navigation")
-        
-        # Services
         st.markdown("""
-        <a href="https://kronosgmt.com/services" target="_blank" class="nav-button">
-            🔧 Services
+        <a href="https://www.kronosgmt.com/services" target="_blank" class="nav-button">
+            Services
         </a>
         """, unsafe_allow_html=True)
         
-        # News
         st.markdown("""
-        <a href="https://kronosgmt.com/news" target="_blank" class="nav-button">
-            📰 News
+        <a href="https://news.kronosgmt.com/" target="_blank" class="nav-button">
+            News
         </a>
         """, unsafe_allow_html=True)
         
-        # Contact Us
         st.markdown("""
-        <a href="https://kronosgmt.com/contact" target="_blank" class="nav-button">
-            📞 Contact Us
+        <a href="https://www.kronosgmt.com/#contact" target="_blank" class="nav-button">
+            Contact Us
         </a>
         """, unsafe_allow_html=True)
         
         st.markdown("---")
 
-
 def main():
     st.markdown('<h1 class="main-header"> Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
-    # MODIFICACIÓN: Comentada la carga desde archivo local, solo desde GitHub
-    df = load_data_from_csv("projects.csv")  # El parámetro se mantiene pero se ignora
+    df = load_data_from_csv("projects.csv")
     if df is None or df.empty:
         st.stop()
 
-    #st.success(f"✅ Loaded {len(df)} projects")
-
     service_options = create_service_mapping(df)
 
-    # NUEVA BARRA LATERAL CON NAVEGACIÓN Y FILTROS
     create_navigation_sidebar()
     
     with st.sidebar:
-        st.markdown('<div class="filter-section">', unsafe_allow_html=True)
         st.markdown("### 🎛️ Filters")
         types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
         selected_type = st.selectbox("🏢 Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🔧 Service", services, index=0)
         st.button("Reset Filters", on_click=lambda: st.rerun())
-        st.markdown('</div>', unsafe_allow_html=True)
 
     filtered_df = filter_data(df, selected_type, selected_service)
 
@@ -511,8 +296,6 @@ def main():
         st.error("No projects match filters.")
     else:
         st.write(f"Showing {len(filtered_df)} projects")
-
-    #create_kpi_cards(filtered_df)
 
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -539,7 +322,6 @@ def main():
 
     st.markdown("---")
     st.caption("© 2025 Kronos GMT | Created by Juan Cano")
-
 
 if __name__ == "__main__":
     main()
