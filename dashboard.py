@@ -44,12 +44,14 @@ st.markdown("""
         border: none;
         cursor: pointer;
         font-size: 14px;
+        font-weight: bold;
+        text-decoration: none; /* Remove underline */
     }
     .nav-button:hover {
         background-color: #2c3e50;
         font-weight: bold;
         color: #ffffff;
-        text-decoration: none;
+        text-decoration: none; /* Remove underline on hover */
     }
     .logo-container {
         text-align: center;
