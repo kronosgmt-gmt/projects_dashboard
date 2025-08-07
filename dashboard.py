@@ -47,6 +47,7 @@ st.markdown("""
     }
     .nav-button:hover {
         background-color: #2c3e50;
+        font-weight: bold;
         color: #ffffff;
         text-decoration: none;
     }
@@ -242,7 +243,7 @@ def create_navigation_sidebar():
         st.markdown("""
         <div class="logo-container">
             <a href="https://kronosgmt.com" target="_blank">
-                <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754538826/Logos_Kronos_JPG-04_pgxlhl.png" 
+                <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754540320/Logos_Kronos_PNG-04_nxdbz3.png" 
                      style="width: 200px; height: auto; border-radius: 10px; cursor: pointer;">
             </a>
         </div>
@@ -277,14 +278,14 @@ def main():
 
     service_options = create_service_mapping(df)
 
-    create_navigation_sidebar()
+    
     
     with st.sidebar:
-        st.markdown("### 🎛️ Filters")
+        st.markdown("### Filters")
         types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
         selected_type = st.selectbox("🏢 Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
-        selected_service = st.selectbox("🔧 Service", services, index=0)
+        selected_service = st.selectbox("🌎 Service", services, index=0)
         st.button("Reset Filters", on_click=lambda: st.rerun())
 
     filtered_df = filter_data(df, selected_type, selected_service)
@@ -293,6 +294,8 @@ def main():
         st.error("No projects match filters.")
     else:
         st.write(f"Showing {len(filtered_df)} projects")
+
+    create_navigation_sidebar()
 
     col1, col2 = st.columns([2, 1])
     with col1:
