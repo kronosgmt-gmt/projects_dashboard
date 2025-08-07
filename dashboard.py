@@ -76,7 +76,7 @@ def is_valid_cloudinary_url(url, cloud_name=None):
         return False
     parsed = urlparse(url)
     if cloud_name:
-        return (parsed.netlnet == "res.cloudinary.com" and
+        return (parsed.netloc == "res.cloudinary.com" and
                 url.startswith(f"https://res.cloudinary.com/{cloud_name}/"))
     return parsed.netloc == "res.cloudinary.com"
 
