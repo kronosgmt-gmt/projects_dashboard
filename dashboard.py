@@ -244,7 +244,7 @@ def create_navigation_sidebar():
         st.markdown("""
         <div class="logo-container">
             <a href="https://kronosgmt.com" target="_blank">
-                <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754538826/Logos_Kronos_JPG-04_pgxlhl.png" 
+                <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754540320/Logos_Kronos_PNG-04_nxdbz3.png" 
                      style="width: 200px; height: auto; border-radius: 10px; cursor: pointer;">
             </a>
         </div>
