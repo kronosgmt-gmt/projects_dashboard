@@ -44,6 +44,7 @@ st.markdown("""
         border: none;
         cursor: pointer;
         font-size: 14px;
+        font-weight: bold;
     }
     .nav-button:hover {
         background-color: #2c3e50;
@@ -52,7 +53,7 @@ st.markdown("""
     }
     .logo-container {
         text-align: center;
-        margin-bottom: 20px;
+        margin-top: 20px;
     }
     .stApp {
         background-color: #1a252f;
@@ -81,10 +82,8 @@ def load_data_from_url(url):
         response.raise_for_status()
         content = io.StringIO(response.text)
         df = pd.read_csv(content, encoding='utf-8')
-        st.success(f"✅ Loaded data from URL: {url}")
         return df
     except Exception as e:
-        st.warning(f"⚠️ Failed to load from URL: {str(e)}")
         return None
 
 @st.cache_data
@@ -93,7 +92,6 @@ def load_data_from_csv(file_path):
     if df is None:
         urls = ["https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"]
         for url in urls:
-            st.info(f"Loading data from GitHub: {url}")
             df = load_data_from_url(url)
             if df is not None:
                 break
@@ -239,6 +237,13 @@ def display_project_gallery(df):
 
 def create_navigation_sidebar():
     with st.sidebar:
+        st.markdown("### 🎛️ Filters")
+        types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
+        selected_type = st.selectbox("🏢 Type", types, index=0)
+        services = ["All"] + service_options if service_options else ["All"]
+        selected_service = st.selectbox("🔧 Service", services, index=0)
+        st.button("Reset Filters", on_click=lambda: st.rerun())
+        
         st.markdown("""
         <div class="logo-container">
             <a href="https://kronosgmt.com" target="_blank">
@@ -279,14 +284,6 @@ def main():
 
     create_navigation_sidebar()
     
-    with st.sidebar:
-        st.markdown("### 🎛️ Filters")
-        types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
-        selected_type = st.selectbox("🏢 Type", types, index=0)
-        services = ["All"] + service_options if service_options else ["All"]
-        selected_service = st.selectbox("🔧 Service", services, index=0)
-        st.button("Reset Filters", on_click=lambda: st.rerun())
-
     filtered_df = filter_data(df, selected_type, selected_service)
 
     if filtered_df.empty:
