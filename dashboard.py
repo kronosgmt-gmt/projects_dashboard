@@ -283,33 +283,31 @@ def create_navigation_sidebar():
         st.markdown("""
         <div class="logo-container">
             <a href="https://kronosgmt.com" target="_blank">
-                <img src="https://via.placeholder.com/200x80/1f77b4/ffffff?text=KRONOS+GMT" 
+                <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754538826/Logos_Kronos_JPG-04_pgxlhl.png" 
                      style="width: 200px; height: auto; border-radius: 10px; cursor: pointer;">
             </a>
         </div>
         """, unsafe_allow_html=True)
         
-        # Menú de navegación
-        st.markdown("### 🧭 Navigation")
-        
+               
         # Services
         st.markdown("""
-        <a href="https://kronosgmt.com/services" target="_blank" class="nav-button">
-            🔧 Services
+        <a href="https://www.kronosgmt.com/services" target="_blank" class="nav-button">
+            Services
         </a>
         """, unsafe_allow_html=True)
         
         # News
         st.markdown("""
-        <a href="https://kronosgmt.com/news" target="_blank" class="nav-button">
-            📰 News
+        <a href="https://news.kronosgmt.com/" target="_blank" class="nav-button">
+            News
         </a>
         """, unsafe_allow_html=True)
         
         # Contact Us
         st.markdown("""
-        <a href="https://kronosgmt.com/contact" target="_blank" class="nav-button">
-            📞 Contact Us
+        <a href="https://www.kronosgmt.com/#contact" target="_blank" class="nav-button">
+            Contact Us
         </a>
         """, unsafe_allow_html=True)
         
@@ -332,7 +330,7 @@ def main():
     create_navigation_sidebar()
     
     with st.sidebar:
-        st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+        #st.markdown('<div class="filter-section">', unsafe_allow_html=True)
         st.markdown("### 🎛️ Filters")
         types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
         selected_type = st.selectbox("🏢 Type", types, index=0)
