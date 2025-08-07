@@ -294,9 +294,11 @@ def main():
         st.error("No projects match filters.")
     else:
         st.write(f"Showing {len(filtered_df)} projects")
+        
 
+        st.markdown("---")
 
-    st.markdown("---")
+    
     
 
     create_navigation_sidebar()
