@@ -295,6 +295,10 @@ def main():
     else:
         st.write(f"Showing {len(filtered_df)} projects")
 
+
+    st.markdown("---")
+    
+
     create_navigation_sidebar()
 
     col1, col2 = st.columns([2, 1])
