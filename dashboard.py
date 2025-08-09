@@ -224,7 +224,7 @@ def create_service_distribution(df):
     fig = px.pie(values=counts.values, names=counts.index, title="Services")
     fig.update_traces(textinfo='percent+label')
     fig.update_layout(
-        paper_bgcolor='#1a252f',  # Background color for the entire plot area
+        
         plot_bgcolor='#34495e'   # Background color for the plot itself
     )
     return fig
