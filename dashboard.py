@@ -223,7 +223,7 @@ def create_service_distribution(df):
     counts = pd.Series(all_services).value_counts()
     fig = px.pie(values=counts.values, names=counts.index, title="Services")
     fig.update_traces(textinfo='percent+label')
-    fig.update_layout(paper_bgcolor='#1a252f')
+    fig.update_layout(paper_bgcolor='#1a242e')
     return fig
 
 def display_project_gallery(df):
