@@ -252,11 +252,36 @@ def create_navigation_sidebar():
         </div>
         """, unsafe_allow_html=True)
         
-        st.markdown("""
-        <a href="https://www.kronosgmt.com/services" target="_blank" class="nav-button">
-            Services
-        </a>
-        """, unsafe_allow_html=True)
+        with st.expander("Services"):
+            st.markdown("""
+            <a href="https://www.kronosgmt.com/3D-rendering" target="_blank" class="nav-button">
+                3D Rendering
+            </a>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <a href="https://www.kronosgmt.com/CAD-drafting" target="_blank" class="nav-button">
+                CAD Drafting
+            </a>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <a href="https://www.kronosgmt.com/takeoffs-schedules" target="_blank" class="nav-button">
+                Takeoffs & Schedules
+            </a>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <a href="https://www.kronosgmt.com/GIS-mapping" target="_blank" class="nav-button">
+                GIS Mapping
+            </a>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("""
+            <a href="https://www.kronosgmt.com/automation-workflow-optimization" target="_blank" class="nav-button">
+                Automation & Workflow Optimization
+            </a>
+            """, unsafe_allow_html=True)
         
         st.markdown("""
         <a href="https://news.kronosgmt.com/" target="_blank" class="nav-button">
