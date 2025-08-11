@@ -84,7 +84,7 @@ def load_data_from_url(url):
         response.raise_for_status()
         content = io.StringIO(response.text)
         df = pd.read_csv(content, encoding='utf-8')
-        st.success(f"✅ Loaded data from URL: {url}")
+        #st.success(f"✅ Loaded data from URL: {url}")
         return df
     except Exception as e:
         st.warning(f"⚠️ Failed to load from URL: {str(e)}")
@@ -96,7 +96,7 @@ def load_data_from_csv(file_path):
     if df is None:
         urls = ["https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"]
         for url in urls:
-            st.info(f"Loading data from GitHub: {url}")
+            #st.info(f"Loading data from GitHub: {url}")
             df = load_data_from_url(url)
             if df is not None:
                 break
