@@ -79,7 +79,7 @@ def is_valid_cloudinary_url(url, cloud_name=None):
 def load_data_from_url(url):
     try:
         if "github.com" in url:
-            #url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+            url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         content = io.StringIO(response.text)
