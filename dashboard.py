@@ -239,36 +239,89 @@ def create_navigation_sidebar():
         </div>
         """, unsafe_allow_html=True)
 
-        # Add CSS for border animation effect on Services expander header
+        # Enhanced CSS for Services expander with neon border animation
         st.markdown("""
         <style>
-        /* Target the Services expander header */
-        .st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header {
-            border: 2px solid #34495e; /* Default border color matching your theme */
-            padding: 5px;
-            border-radius: 5px;
-            transition: border-color 0.5s;
+        /* Enhanced Services expander styling with neon border effect */
+        .st-expander > details > summary {
+            border: 2px solid #34495e;
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            position: relative;
+            overflow: hidden;
         }
 
-        .st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header.animate-border {
-            animation: borderBlink 1.5s infinite;
+        /* Neon border animation for Services expander */
+        .st-expander > details > summary:hover,
+        .st-expander > details[open] > summary {
+            animation: neonBorderPulse 2s infinite;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
         }
 
-        @keyframes borderBlink {
-            0% { border-color: #34495e; }
-            50% { border-color: #00FFFF; } /* Neon blue */
-            100% { border-color: #34495e; }
+        /* Continuous subtle pulse effect */
+        .st-expander > details > summary {
+            animation: subtlePulse 3s infinite;
         }
 
-        /* Ensure the header text styling */
-        .st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header {
-            font-size: 28px;
-            font-family: Helvetica, Arial, sans-serif;
-            font-weight: bold;
-            color: #71d90b;
-            text-transform: uppercase;
+        @keyframes neonBorderPulse {
+            0% { 
+                border-color: #00FFFF; 
+                box-shadow: 0 0 5px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
+            }
+            25% { 
+                border-color: #00CCFF; 
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.6), inset 0 0 10px rgba(0, 255, 255, 0.2);
+            }
+            50% { 
+                border-color: #0099FF; 
+                box-shadow: 0 0 25px rgba(0, 255, 255, 0.8), inset 0 0 15px rgba(0, 255, 255, 0.3);
+            }
+            75% { 
+                border-color: #00CCFF; 
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.6), inset 0 0 10px rgba(0, 255, 255, 0.2);
+            }
+            100% { 
+                border-color: #00FFFF; 
+                box-shadow: 0 0 5px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
+            }
         }
 
+        @keyframes subtlePulse {
+            0% { 
+                border-color: #34495e; 
+                box-shadow: none;
+            }
+            50% { 
+                border-color: #4a6582; 
+                box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
+            }
+            100% { 
+                border-color: #34495e; 
+                box-shadow: none;
+            }
+        }
+
+        /* Enhanced text styling for Services */
+        .st-expander > details > summary {
+            font-size: 18px !important;
+            font-family: 'Helvetica', 'Arial', sans-serif !important;
+            font-weight: bold !important;
+            color: #71d90b !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(113, 217, 11, 0.3);
+        }
+
+        /* Hover effect enhancement */
+        .st-expander > details > summary:hover {
+            transform: translateY(-1px);
+            color: #8FE021 !important;
+            text-shadow: 0 0 10px rgba(113, 217, 11, 0.6);
+        }
+
+        /* Standard nav button styles */
         .nav-button {
             display: block;
             width: 100%;
@@ -284,23 +337,17 @@ def create_navigation_sidebar():
             font-size: 14px;
             font-weight: bold;
             text-decoration: none;
+            transition: all 0.3s ease;
         }
         .nav-button:hover {
             background-color: #2c3e50;
             font-weight: bold;
             color: #1a252f;
             text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         </style>
-        <script>
-        // Apply the animation class after the DOM is loaded
-        window.addEventListener('load', function() {
-            const servicesExpander = document.querySelector('.st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header');
-            if (servicesExpander) {
-                servicesExpander.classList.add('animate-border');
-            }
-        });
-        </script>
         """, unsafe_allow_html=True)
         
         with st.expander("Services", expanded=False):
