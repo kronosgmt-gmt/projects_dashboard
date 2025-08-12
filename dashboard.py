@@ -364,8 +364,8 @@ def main():
     if not filtered_df.empty:
         display_cols = ['Project_Name', 'Scope of work']
         available_cols = [c for c in display_cols if c in filtered_df.columns]
-        st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)"""
-    """else:
+        st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
+    else:
         st.warning("No data to show")"""
 
     st.markdown("---")
