@@ -347,26 +347,26 @@ def main():
 
     col1, col2 = st.columns([2, 1])
     with col1:
-        st.markdown('<div class="section-header">📍 Map</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
         map_obj = create_interactive_map(filtered_df)
         if map_obj:
             st_folium(map_obj, use_container_width=True, height=500)
 
     with col2:
-        st.markdown('<div class="section-header">📊 Services</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
         chart = create_service_distribution(filtered_df)
         if chart:
             st.plotly_chart(chart, use_container_width=True)
 
     display_project_gallery(filtered_df)
 
-    st.markdown('<div class="section-header">📋 Projects</div>', unsafe_allow_html=True)
+    """st.markdown('<div class="section-header">📋 Projects</div>', unsafe_allow_html=True)
     if not filtered_df.empty:
         display_cols = ['Project_Name', 'Scope of work']
         available_cols = [c for c in display_cols if c in filtered_df.columns]
         st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
     else:
-        st.warning("No data to show")
+        st.warning("No data to show")"""
 
     st.markdown("---")
     st.caption("© 2025 Kronos GMT | Created by Juan Cano")
