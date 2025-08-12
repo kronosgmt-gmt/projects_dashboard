@@ -134,7 +134,7 @@ def load_data():
             st.error("❌ No valid projects with coordinates.")
             return None
 
-        st.success(f"✅ Loaded data from URL: {url}")
+        #st.success(f"✅ Loaded data from URL: {url}")
         return df
     except Exception as e:
         st.warning(f"⚠️ Failed to load from URL: {str(e)}")
