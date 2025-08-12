@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
-from datetime import datetime
 import folium
 from streamlit_folium import st_folium
 from urllib.parse import urlparse
@@ -84,7 +83,6 @@ def load_data():
         content = io.StringIO(response.text)
         df = pd.read_csv(content, encoding='utf-8')
 
-        # Data cleaning and validation
         df.columns = df.columns.str.strip()
         df['Longitude'] = pd.to_numeric(df['Longitude'], errors='coerce')
         df['Latitude'] = pd.to_numeric(df['Latitude'], errors='coerce')
@@ -131,10 +129,10 @@ def load_data():
             st.error("❌ No valid projects with coordinates.")
             return None
 
-        st.write(f"✅ Loaded {len(df)} projects from URL")
+        st.write(f"✅ Loaded {len(df)} projects")
         return df
     except Exception as e:
-        st.error(f"⚠️ Failed to load from URL: {str(e)}")
+        st.error(f"⚠️ Failed to load data: {str(e)}")
         return None
 
 def create_service_mapping(df):
@@ -152,25 +150,24 @@ def filter_data(df, project_type_filter, service_filter, bounds=None):
         filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
     if bounds:
         try:
-            lat_min, lat_max = bounds['_southWest']['lat'], bounds['_northEast']['lat']
-            lng_min, lng_max = bounds['_southWest']['lng'], bounds['_northEast']['lng']
+            lat_min = bounds['_southWest']['lat']
+            lat_max = bounds['_northEast']['lat']
+            lng_min = bounds['_southWest']['lng']
+            lng_max = bounds['_northEast']['lng']
             filtered_df = filtered_df[
                 (filtered_df['Latitude'].between(lat_min, lat_max)) &
                 (filtered_df['Longitude'].between(lng_min, lng_max))
             ]
-            st.write(f"📍 Filtered to {len(filtered_df)} projects within map bounds: "
+            st.write(f"📍 Filtered to {len(filtered_df)} projects in bounds: "
                      f"Lat [{lat_min:.2f}, {lat_max:.2f}], Lon [{lng_min:.2f}, {lng_max:.2f}]")
         except Exception as e:
-            st.warning(f"⚠️ Error filtering by map bounds: {str(e)}")
+            st.warning(f"⚠️ Error applying map bounds filter: {str(e)}")
     return filtered_df
 
 def create_interactive_map(df, map_key):
     if df.empty or len(df) == 0:
         st.warning("No data to display on map.")
         return None
-
-    if 'Customer_Type' not in df.columns:
-        df['Customer_Type'] = 'Unknown'
 
     df = df.dropna(subset=['Latitude', 'Longitude'])
     if df.empty:
@@ -357,11 +354,15 @@ def main():
         if st.button("Reset Filters"):
             st.session_state['map_bounds'] = None
             st.rerun()
+        if st.button("Apply Map Filter"):
+            st.rerun()
         st.markdown("---")
 
     # Initialize session state for map bounds
     if 'map_bounds' not in st.session_state:
         st.session_state['map_bounds'] = None
+    if 'last_map_data' not in st.session_state:
+        st.session_state['last_map_data'] = None
 
     # Apply filters
     filtered_df = filter_data(df, selected_type, selected_service, bounds=st.session_state.get('map_bounds'))
@@ -376,13 +377,14 @@ def main():
     col1, col2 = st.columns([2, 1])
     with col1:
         st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
-        map_key = f"map_{selected_type}_{selected_service}_{st.session_state.get('map_bounds', 'no_bounds')}"
+        map_key = f"map_{selected_type}_{selected_service}_{id(st.session_state.get('map_bounds', {}))}"
         map_obj = create_interactive_map(filtered_df, map_key)
         if map_obj:
             map_data = st_folium(map_obj, key=map_key, use_container_width=True, height=500)
-            # Update map bounds on interaction
-            if map_data and 'bounds' in map_data and map_data['bounds']:
+            # Check if map_data contains bounds and update session state
+            if map_data and 'bounds' in map_data and map_data['bounds'] != st.session_state.get('last_map_data'):
                 st.session_state['map_bounds'] = map_data['bounds']
+                st.session_state['last_map_data'] = map_data['bounds']
                 st.write("🗺️ Map bounds updated")
                 st.rerun()
 
