@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import os
 import requests
 import io
+import streamlit.components.v1 as components
 
 # Cloudinary configuration
 CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
