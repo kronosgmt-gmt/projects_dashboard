@@ -79,7 +79,7 @@ def is_valid_cloudinary_url(url, cloud_name=None):
 def load_data_from_url(url):
     try:
         if "github.com" in url:
-            url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+            #url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         content = io.StringIO(response.text)
@@ -90,7 +90,7 @@ def load_data_from_url(url):
         st.warning(f"⚠️ Failed to load from URL: {str(e)}")
         return None
 
-"""@st.cache_data
+@st.cache_data
 def load_data_from_csv(file_path):
     df = None
     if df is None:
@@ -103,7 +103,7 @@ def load_data_from_csv(file_path):
 
     if df is None:
         st.error("❌ Failed to load data from GitHub.")
-        return None"""
+        return None
 
     df.columns = df.columns.str.strip()
     df['Longitude'] = pd.to_numeric(df['Longitude'], errors='coerce')
