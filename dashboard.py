@@ -242,44 +242,43 @@ def create_navigation_sidebar():
         # Add CSS for blinking effect on Services expander header
         st.markdown("""
         <style>
-            .blink {
-                animation: blink 1.5s infinite !important;
-                font-weight: bold;
-                color: #ffffff;
-            }
-            @keyframes blink {
-                0% { opacity: 1; }
-                50% { opacity: 0.3; }
-                100% { opacity: 1; }
-            }
-            .nav-button {
-                display: block;
-                width: 100%;
-                padding: 10px;
-                margin: 5px 0;
-                background-color: #34495e;
-                color: #ffffff;
-                text-decoration: none;
-                border-radius: 5px;
-                text-align: center;
-                border: none;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: bold;
-                text-decoration: none;
-            }
-            .nav-button:hover {
-                background-color: #2c3e50;
-                font-weight: bold;
-                color: #1a252f;
-                text-decoration: none;
-            }
+        /* Target the Services expander header by its text content */
+        .st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header {
+            animation: blink 1.5s infinite !important;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        .nav-button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #34495e;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .nav-button:hover {
+            background-color: #2c3e50;
+            font-weight: bold;
+            color: #1a252f;
+            text-decoration: none;
+        }
         </style>
-
-  
         """, unsafe_allow_html=True)
         
-        with st.expander('<span class="blink">Services</span>', expanded=False, unsafe_allow_html=True):
+        with st.expander("Services", expanded=False):
             st.markdown("""
             <a href="https://www.kronosgmt.com/3D-rendering" target="_blank" class="nav-button">
                 3D Rendering
