@@ -90,7 +90,7 @@ def load_data_from_url(url):
         st.warning(f"⚠️ Failed to load from URL: {str(e)}")
         return None
 
-@st.cache_data
+"""@st.cache_data
 def load_data_from_csv(file_path):
     df = None
     if df is None:
@@ -103,7 +103,7 @@ def load_data_from_csv(file_path):
 
     if df is None:
         st.error("❌ Failed to load data from GitHub.")
-        return None
+        return None"""
 
     df.columns = df.columns.str.strip()
     df['Longitude'] = pd.to_numeric(df['Longitude'], errors='coerce')
@@ -364,8 +364,8 @@ def main():
     if not filtered_df.empty:
         display_cols = ['Project_Name', 'Scope of work']
         available_cols = [c for c in display_cols if c in filtered_df.columns]
-        st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
-    else:
+        st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)"""
+    """else:
         st.warning("No data to show")"""
 
     st.markdown("---")
