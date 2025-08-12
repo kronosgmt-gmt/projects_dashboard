@@ -239,79 +239,34 @@ def create_navigation_sidebar():
         </div>
         """, unsafe_allow_html=True)
 
-        # Add CSS for blinking effect and text styling on Services expander header
+        # Add CSS for border animation effect on Services expander header
         st.markdown("""
         <style>
-        /* Text styling for the expander header */
-        .text {
+        /* Target the Services expander header */
+        .st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header {
+            border: 2px solid #34495e; /* Default border color matching your theme */
+            padding: 5px;
+            border-radius: 5px;
+            transition: border-color 0.5s;
+        }
+
+        .st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header.animate-border {
+            animation: borderBlink 1.5s infinite;
+        }
+
+        @keyframes borderBlink {
+            0% { border-color: #34495e; }
+            50% { border-color: #00FFFF; } /* Neon blue */
+            100% { border-color: #34495e; }
+        }
+
+        /* Ensure the header text styling */
+        .st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header {
             font-size: 28px;
-            font-family: Helvetica, Arial, sans-serif; /* Fallback fonts */
+            font-family: Helvetica, Arial, sans-serif;
             font-weight: bold;
             color: #71d90b;
             text-transform: uppercase;
-        }
-
-        /* Blinking animation with vendor prefixes */
-        .parpadea {
-            animation-name: parpadeo;
-            animation-duration: 1s;
-            animation-timing-function: linear;
-            animation-iteration-count: infinite;
-
-            -webkit-animation-name: parpadeo;
-            -webkit-animation-duration: 1s;
-            -webkit-animation-timing-function: linear;
-            -webkit-animation-iteration-count: infinite;
-
-            -moz-animation-name: parpadeo;
-            -moz-animation-duration: 1s;
-            -moz-animation-timing-function: linear;
-            -moz-animation-iteration-count: infinite;
-        }
-
-        /* Keyframes for blinking */
-        @-moz-keyframes parpadeo {
-            0% { opacity: 1.0; }
-            50% { opacity: 0.0; }
-            100% { opacity: 1.0; }
-        }
-
-        @-webkit-keyframes parpadeo {
-            0% { opacity: 1.0; }
-            50% { opacity: 0.0; }
-            100% { opacity: 1.0; }
-        }
-
-        @keyframes parpadeo {
-            0% { opacity: 1.0; }
-            50% { opacity: 0.0; }
-            100% { opacity: 1.0; }
-        }
-
-        /* Target the Services expander header */
-        .st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header {
-            font-size: 28px !important; /* Override Streamlit default */
-            font-family: Helvetica, Arial, sans-serif !important;
-            font-weight: bold !important;
-            color: #71d90b !important;
-            text-transform: uppercase !important;
-        }
-
-        .st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header > span {
-            animation-name: parpadeo;
-            animation-duration: 1s;
-            animation-timing-function: linear;
-            animation-iteration-count: infinite;
-
-            -webkit-animation-name: parpadeo;
-            -webkit-animation-duration: 1s;
-            -webkit-animation-timing-function: linear;
-            -webkit-animation-iteration-count: infinite;
-
-            -moz-animation-name: parpadeo;
-            -moz-animation-duration: 1s;
-            -moz-animation-timing-function: linear;
-            -moz-animation-iteration-count: infinite;
         }
 
         .nav-button {
@@ -337,6 +292,15 @@ def create_navigation_sidebar():
             text-decoration: none;
         }
         </style>
+        <script>
+        // Apply the animation class after the DOM is loaded
+        window.addEventListener('load', function() {
+            const servicesExpander = document.querySelector('.st-expander[data-testid="stExpander"][aria-label="Services"] .st-expander-header');
+            if (servicesExpander) {
+                servicesExpander.classList.add('animate-border');
+            }
+        });
+        </script>
         """, unsafe_allow_html=True)
         
         with st.expander("Services", expanded=False):
