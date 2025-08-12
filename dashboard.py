@@ -23,7 +23,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS with dark mode
+# Custom CSS with dark mode (unchanged)
 st.markdown("""
 <style>
     .main-header { font-size: 2.5rem; background-color: #1a252f; font-weight: bold; color: #ffffff; text-align: center; margin-bottom: 2rem; }
@@ -46,13 +46,13 @@ st.markdown("""
         cursor: pointer;
         font-size: 14px;
         font-weight: bold;
-        text-decoration: none; /* Remove underline */
+        text-decoration: none;
     }
     .nav-button:hover {
         background-color: #2c3e50;
         font-weight: bold;
         color: #1a252f;
-        text-decoration: none; /* Remove underline on hover */
+        text-decoration: none;
     }
     .logo-container {
         text-align: center;
@@ -135,7 +135,6 @@ def load_data():
             st.error("❌ No valid projects with coordinates.")
             return None
 
-        #st.success(f"✅ Loaded data from URL: {url}")
         return df
     except Exception as e:
         st.warning(f"⚠️ Failed to load from URL: {str(e)}")
@@ -148,16 +147,24 @@ def create_service_mapping(df):
             all_services.update(services)
     return sorted([s for s in all_services if s])
 
-def filter_data(df, project_type_filter, service_filter):
+def filter_data(df, project_type_filter, service_filter, bounds=None):
     filtered_df = df.copy()
     if project_type_filter != "All":
         filtered_df = filtered_df[filtered_df['Customer_Type'] == project_type_filter]
     if service_filter != "All":
         filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
+    if bounds:
+        # Filter by map bounds
+        lat_min, lat_max = bounds['_southWest']['lat'], bounds['_northEast']['lat']
+        lng_min, lng_max = bounds['_southWest']['lng'], bounds['_northEast']['lng']
+        filtered_df = filtered_df[
+            (filtered_df['Latitude'].between(lat_min, lat_max)) &
+            (filtered_df['Longitude'].between(lng_min, lng_max))
+        ]
     return filtered_df
 
 @st.cache_resource
-def create_interactive_map(df):
+def create_interactive_map(df, map_key):
     if df.empty or len(df) == 0:
         st.warning("No data to display on map.")
         return None
@@ -240,7 +247,7 @@ def create_navigation_sidebar():
         </div>
         """, unsafe_allow_html=True)
 
-        # CSS para el efecto neón en el botón Services
+        # CSS for neon effect (unchanged)
         st.markdown("""
         <style>
         @keyframes neonPulse {
@@ -265,8 +272,6 @@ def create_navigation_sidebar():
                 border-color: #00FFFF !important; 
             }
         }
-
-        /* Aplicar efecto neón a TODOS los expanders (forzado) */
         div[data-testid="stExpander"] summary {
             animation: neonPulse 2s infinite !important;
             border: 2px solid #00FFFF !important;
@@ -279,8 +284,6 @@ def create_navigation_sidebar():
             letter-spacing: 1px !important;
             text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
         }
-
-        /* Selector alternativo más específico */
         .st-expander > div > details > summary {
             animation: neonPulse 2s infinite !important;
             border: 2px solid #00FFFF !important;
@@ -293,8 +296,6 @@ def create_navigation_sidebar():
             letter-spacing: 1px !important;
             text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
         }
-
-        /* Selector aún más específico */
         .st-expander details summary {
             animation: neonPulse 2s infinite !important;
             border: 2px solid #00FFFF !important;
@@ -307,8 +308,6 @@ def create_navigation_sidebar():
             letter-spacing: 1px !important;
             text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
         }
-
-        /* Botones de navegación normales */
         .nav-button {
             display: block;
             width: 100%;
@@ -336,16 +335,13 @@ def create_navigation_sidebar():
         }
         </style>
         """, unsafe_allow_html=True)
-        
-        # JavaScript para forzar el efecto
+
+        # JavaScript for neon effect (unchanged)
         st.components.v1.html("""
         <script>
         function forceNeonEffect() {
-            // Esperar a que se cargue la página
             setTimeout(function() {
-                // Buscar todos los elementos summary
                 const summaries = document.querySelectorAll('summary');
-                
                 summaries.forEach(function(summary) {
                     if (summary.textContent.includes('Services') || summary.textContent.includes('SERVICES')) {
                         summary.style.cssText = `
@@ -363,8 +359,6 @@ def create_navigation_sidebar():
                         `;
                     }
                 });
-                
-                // También aplicar a todos los summary por si acaso
                 const allSummaries = document.querySelectorAll('div[data-testid="stExpander"] summary');
                 allSummaries.forEach(function(summary) {
                     summary.style.cssText = `
@@ -381,43 +375,35 @@ def create_navigation_sidebar():
                         box-shadow: 0 0 10px #00FFFF !important;
                     `;
                 });
-                
             }, 1000);
         }
-        
-        // Ejecutar múltiples veces para asegurar que funcione
         forceNeonEffect();
         setTimeout(forceNeonEffect, 2000);
         setTimeout(forceNeonEffect, 3000);
-        
         </script>
         """, height=0)
-        
+
         with st.expander("Services", expanded=False):
             st.markdown("""
             <a href="https://www.kronosgmt.com/3D-rendering" target="_blank" class="nav-button">
                 3D Rendering
             </a>
             """, unsafe_allow_html=True)
-            
             st.markdown("""
             <a href="https://www.kronosgmt.com/CAD-drafting" target="_blank" class="nav-button">
                 CAD Drafting
             </a>
             """, unsafe_allow_html=True)
-            
             st.markdown("""
             <a href="https://www.kronosgmt.com/takeoffs-schedules" target="_blank" class="nav-button">
                 Takeoffs & Schedules
             </a>
             """, unsafe_allow_html=True)
-            
             st.markdown("""
             <a href="https://www.kronosgmt.com/GIS-mapping" target="_blank" class="nav-button">
                 GIS Mapping
             </a>
             """, unsafe_allow_html=True)
-            
             st.markdown("""
             <a href="https://www.kronosgmt.com/automation-workflow-optimization" target="_blank" class="nav-button">
                 Automation & Workflow Optimization
@@ -429,13 +415,11 @@ def create_navigation_sidebar():
             News
         </a>
         """, unsafe_allow_html=True)
-        
         st.markdown("""
         <a href="https://www.kronosgmt.com/#contact" target="_blank" class="nav-button">
             Contact Us
         </a>
         """, unsafe_allow_html=True)
-        
         st.markdown("---")
 
 def main():
@@ -447,8 +431,6 @@ def main():
 
     service_options = create_service_mapping(df)
 
-    
-    
     with st.sidebar:
         st.markdown("### Filters")
         types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
@@ -456,28 +438,35 @@ def main():
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
         st.button("Reset Filters", on_click=lambda: st.rerun())
-
-
         st.markdown("---")
 
-    filtered_df = filter_data(df, selected_type, selected_service)
+    # Initialize session state for map bounds
+    if 'map_bounds' not in st.session_state:
+        st.session_state['map_bounds'] = None
+
+    # Apply filters based on type and service
+    filtered_df = filter_data(df, selected_type, selected_service, bounds=st.session_state.get('map_bounds'))
 
     if filtered_df.empty:
         st.error("No projects match filters.")
     else:
         st.write(f"Showing {len(filtered_df)} projects")
-        
-    
-    create_navigation_sidebar()
 
-    
+    create_navigation_sidebar()
 
     col1, col2 = st.columns([2, 1])
     with col1:
         st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
-        map_obj = create_interactive_map(filtered_df)
+        # Use a unique key for the map to ensure it updates correctly
+        map_key = f"map_{selected_type}_{selected_service}"
+        map_obj = create_interactive_map(filtered_df, map_key)
         if map_obj:
-            st_folium(map_obj, use_container_width=True, height=500)
+            map_data = st_folium(map_obj, key=map_key, use_container_width=True, height=500)
+            # Update session state with map bounds when the user interacts with the map
+            if map_data and 'bounds' in map_data:
+                st.session_state['map_bounds'] = map_data['bounds']
+                # Rerun to update the filtered data based on new bounds
+                st.rerun()
 
     with col2:
         st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
@@ -486,16 +475,6 @@ def main():
             st.plotly_chart(chart, use_container_width=True)
 
     display_project_gallery(filtered_df)
-
-    #desaparecer tabla
-
-    #st.markdown('<div class="section-header">📋 Projects</div>', unsafe_allow_html=True)
-    #if not filtered_df.empty:
-        #display_cols = ['Project_Name', 'Scope of work']
-        #available_cols = [c for c in display_cols if c in filtered_df.columns]
-        #st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
-    #else:
-        #st.warning("No data to show")
 
     st.markdown("---")
     st.caption("© 2025 Kronos GMT | Created by Juan Cano")
