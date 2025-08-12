@@ -76,7 +76,9 @@ def is_valid_cloudinary_url(url, cloud_name=None):
         return (parsed.netloc == "res.cloudinary.com" and url.startswith(f"https://res.cloudinary.com/{cloud_name}/"))
     return parsed.netloc == "res.cloudinary.com"
 
-def load_data_from_url(url):
+@st.cache_data
+def load_data():
+    url = "https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"
     try:
         if "github.com" in url:
             url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
@@ -84,74 +86,59 @@ def load_data_from_url(url):
         response.raise_for_status()
         content = io.StringIO(response.text)
         df = pd.read_csv(content, encoding='utf-8')
+
+        # Data cleaning and validation
+        df.columns = df.columns.str.strip()
+        df['Longitude'] = pd.to_numeric(df['Longitude'], errors='coerce')
+        df['Latitude'] = pd.to_numeric(df['Latitude'], errors='coerce')
+
+        if 'Customer_Type' in df.columns:
+            df['Customer_Type'] = df['Customer_Type'].fillna('Unknown')
+        else:
+            df['Customer_Type'] = 'Unknown'
+
+        def clean_services(x):
+            if pd.isna(x) or not x:
+                return []
+            try:
+                if isinstance(x, str):
+                    if x.startswith('['):
+                        return [s.strip(" '") for s in x.strip("[]").split(',') if s.strip()]
+                    return [s.strip() for s in x.split(',') if s.strip()]
+                return []
+            except:
+                return []
+
+        if 'Service_2' in df.columns:
+            df['Service_2_list'] = df['Service_2'].apply(clean_services)
+        else:
+            df['Service_2_list'] = [[] for _ in range(len(df))]
+
+        required = ['project_id', 'Project_Name', 'Longitude', 'Latitude']
+        missing = [col for col in required if col not in df.columns]
+        if missing:
+            st.error(f"❌ Missing columns: {missing}")
+            return None
+
+        df.dropna(subset=['Longitude', 'Latitude'], inplace=True)
+        df = df[(df['Latitude'].between(-90, 90)) & (df['Longitude'].between(-180, 180))]
+
+        if 'Image' in df.columns and CLOUDINARY_CLOUD_NAME:
+            df['Image'] = df['Image'].apply(
+                lambda x: f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/{x.strip()}"
+                if pd.notna(x) and isinstance(x, str) and x.strip() and not is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME)
+                else x
+            )
+
+        if df.empty:
+            st.error("❌ No valid projects with coordinates.")
+            return None
+
         st.success(f"✅ Loaded data from URL: {url}")
         return df
     except Exception as e:
         st.warning(f"⚠️ Failed to load from URL: {str(e)}")
         return None
-
-@st.cache_data
-def load_data_from_csv(file_path):
-    df = None
-    if df is None:
-        urls = ["https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"]
-        for url in urls:
-            st.info(f"Loading data from GitHub: {url}")
-            df = load_data_from_url(url)
-            if df is not None:
-                break
-
-    if df is None:
-        st.error("❌ Failed to load data from GitHub.")
-        return None
-
-    df.columns = df.columns.str.strip()
-    df['Longitude'] = pd.to_numeric(df['Longitude'], errors='coerce')
-    df['Latitude'] = pd.to_numeric(df['Latitude'], errors='coerce')
-
-    if 'Customer_Type' in df.columns:
-        df['Customer_Type'] = df['Customer_Type'].fillna('Unknown')
-    else:
-        df['Customer_Type'] = 'Unknown'
-
-    def clean_services(x):
-        if pd.isna(x) or not x:
-            return []
-        try:
-            if isinstance(x, str):
-                if x.startswith('['):
-                    return [s.strip(" '") for s in x.strip("[]").split(',') if s.strip()]
-                return [s.strip() for s in x.split(',') if s.strip()]
-            return []
-        except:
-            return []
-
-    if 'Service_2' in df.columns:
-        df['Service_2_list'] = df['Service_2'].apply(clean_services)
-    else:
-        df['Service_2_list'] = [[] for _ in range(len(df))]
-
-    required = ['project_id', 'Project_Name', 'Longitude', 'Latitude']
-    missing = [col for col in required if col not in df.columns]
-    if missing:
-        st.error(f"❌ Missing columns: {missing}")
-        return None
-
-    df.dropna(subset=['Longitude', 'Latitude'], inplace=True)
-    df = df[(df['Latitude'].between(-90, 90)) & (df['Longitude'].between(-180, 180))]
-
-    if 'Image' in df.columns and CLOUDINARY_CLOUD_NAME:
-        df['Image'] = df['Image'].apply(
-            lambda x: f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/{x.strip()}"
-            if pd.notna(x) and isinstance(x, str) and x.strip() and not is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME)
-            else x
-        )
-
-    if df.empty:
-        st.error("❌ No valid projects with coordinates.")
-        return None
-
-    return df
 
 def create_service_mapping(df):
     all_services = set()
