@@ -239,88 +239,46 @@ def create_navigation_sidebar():
         </div>
         """, unsafe_allow_html=True)
 
-        # Enhanced CSS for Services expander with neon border animation
+        # Enhanced CSS and JavaScript for Services expander with neon border animation
         st.markdown("""
         <style>
-        /* Enhanced Services expander styling with neon border effect */
-        .st-expander > details > summary {
-            border: 2px solid #34495e;
-            padding: 12px 16px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Neon border animation for Services expander */
-        .st-expander > details > summary:hover,
-        .st-expander > details[open] > summary {
-            animation: neonBorderPulse 2s infinite;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-        }
-
-        /* Continuous subtle pulse effect */
-        .st-expander > details > summary {
-            animation: subtlePulse 3s infinite;
-        }
-
+        /* Neon border keyframes */
         @keyframes neonBorderPulse {
             0% { 
-                border-color: #00FFFF; 
-                box-shadow: 0 0 5px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
+                border-color: #00FFFF !important; 
+                box-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3) !important;
             }
             25% { 
-                border-color: #00CCFF; 
-                box-shadow: 0 0 15px rgba(0, 255, 255, 0.6), inset 0 0 10px rgba(0, 255, 255, 0.2);
+                border-color: #00CCFF !important; 
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.7), 0 0 20px rgba(0, 255, 255, 0.4) !important;
             }
             50% { 
-                border-color: #0099FF; 
-                box-shadow: 0 0 25px rgba(0, 255, 255, 0.8), inset 0 0 15px rgba(0, 255, 255, 0.3);
+                border-color: #0099FF !important; 
+                box-shadow: 0 0 25px rgba(0, 255, 255, 0.9), 0 0 30px rgba(0, 255, 255, 0.5) !important;
             }
             75% { 
-                border-color: #00CCFF; 
-                box-shadow: 0 0 15px rgba(0, 255, 255, 0.6), inset 0 0 10px rgba(0, 255, 255, 0.2);
+                border-color: #00CCFF !important; 
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.7), 0 0 20px rgba(0, 255, 255, 0.4) !important;
             }
             100% { 
-                border-color: #00FFFF; 
-                box-shadow: 0 0 5px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
+                border-color: #00FFFF !important; 
+                box-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3) !important;
             }
         }
 
-        @keyframes subtlePulse {
-            0% { 
-                border-color: #34495e; 
-                box-shadow: none;
-            }
-            50% { 
-                border-color: #4a6582; 
-                box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
-            }
-            100% { 
-                border-color: #34495e; 
-                box-shadow: none;
-            }
-        }
-
-        /* Enhanced text styling for Services */
-        .st-expander > details > summary {
-            font-size: 18px !important;
-            font-family: 'Helvetica', 'Arial', sans-serif !important;
+        /* Class for neon effect */
+        .neon-services-effect {
+            animation: neonBorderPulse 2s infinite !important;
+            border: 2px solid #00FFFF !important;
+            border-radius: 8px !important;
+            padding: 8px 12px !important;
+            background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%) !important;
             font-weight: bold !important;
-            color: #71d90b !important;
             text-transform: uppercase !important;
-            letter-spacing: 1px;
-            text-shadow: 0 0 5px rgba(113, 217, 11, 0.3);
+            letter-spacing: 1px !important;
         }
 
-        /* Hover effect enhancement */
-        .st-expander > details > summary:hover {
-            transform: translateY(-1px);
-            color: #8FE021 !important;
-            text-shadow: 0 0 10px rgba(113, 217, 11, 0.6);
-        }
-
+                
         /* Standard nav button styles */
         .nav-button {
             display: block;
@@ -348,6 +306,50 @@ def create_navigation_sidebar():
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         </style>
+        
+        <script>
+        // Function to apply neon effect to Services expander
+        function applyNeonEffect() {
+            setTimeout(function() {
+                // Find all expander elements
+                const expanders = document.querySelectorAll('[data-testid="stExpander"]');
+                
+                expanders.forEach(function(expander) {
+                    const summary = expander.querySelector('summary');
+                    if (summary && summary.textContent.includes('Services')) {
+                        // Apply neon effect class
+                        summary.classList.add('neon-services-effect');
+                        
+                        // Force style update
+                        summary.style.cssText += `
+                            animation: neonBorderPulse 2s infinite !important;
+                            border: 2px solid #00FFFF !important;
+                            border-radius: 8px !important;
+                            padding: 8px 12px !important;
+                            background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%) !important;
+                            font-weight: bold !important;
+                            text-transform: uppercase !important;
+                            letter-spacing: 1px !important;
+                            color: #71d90b !important;
+                        `;
+                        
+                        console.log('Neon effect applied to Services expander');
+                    }
+                });
+            }, 500);
+        }
+
+        // Apply effect when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', applyNeonEffect);
+        } else {
+            applyNeonEffect();
+        }
+        
+        // Also apply when Streamlit updates
+        setTimeout(applyNeonEffect, 1000);
+        setTimeout(applyNeonEffect, 2000);
+        </script>
         """, unsafe_allow_html=True)
         
         with st.expander("Services", expanded=False):
