@@ -76,7 +76,7 @@ def is_valid_cloudinary_url(url, cloud_name=None):
         return (parsed.netloc == "res.cloudinary.com" and url.startswith(f"https://res.cloudinary.com/{cloud_name}/"))
     return parsed.netloc == "res.cloudinary.com"
 
-def load_data_from_url(url):
+"""def load_data_from_url(url):
     try:
         if "github.com" in url:
             url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
@@ -88,7 +88,7 @@ def load_data_from_url(url):
         return df
     except Exception as e:
         st.warning(f"⚠️ Failed to load from URL: {str(e)}")
-        return None
+        return None"""
 
 @st.cache_data
 def load_data_from_csv(file_path):
