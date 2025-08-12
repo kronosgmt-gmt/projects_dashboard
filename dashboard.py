@@ -275,7 +275,7 @@ def create_navigation_sidebar():
             padding: 12px !important;
             font-weight: bold !important;
             text-transform: uppercase !important;
-            color: #71d90b !important;
+            color: #00FFFF !important;
             letter-spacing: 1px !important;
             text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
         }
@@ -289,7 +289,7 @@ def create_navigation_sidebar():
             padding: 12px !important;
             font-weight: bold !important;
             text-transform: uppercase !important;
-            color: #71d90b !important;
+            color: #00FFFF !important;
             letter-spacing: 1px !important;
             text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
         }
@@ -303,7 +303,7 @@ def create_navigation_sidebar():
             padding: 12px !important;
             font-weight: bold !important;
             text-transform: uppercase !important;
-            color: #71d90b !important;
+            color: #00FFFF !important;
             letter-spacing: 1px !important;
             text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
         }
