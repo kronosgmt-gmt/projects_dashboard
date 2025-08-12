@@ -251,6 +251,20 @@ def create_navigation_sidebar():
             </a>
         </div>
         """, unsafe_allow_html=True)
+
+        # Add CSS for blinking effect
+        st.markdown("""
+        <style>
+        .blink {
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        </style>
+        """, unsafe_allow_html=True)
         
         with st.expander("Services"):
             st.markdown("""
