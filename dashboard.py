@@ -301,7 +301,7 @@ def create_navigation_sidebar():
 def main():
     st.markdown('<h1 class="main-header"> Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
-    df = load_data_from_csv("projects.csv")
+    df = load_data("projects.csv")
     if df is None or df.empty:
         st.stop()
 
