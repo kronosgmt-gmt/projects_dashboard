@@ -319,46 +319,100 @@ def main():
 
     with col1:
         st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
-        map_obj = create_interactive_map(filtered_df)
-        if map_obj:
-            # Capture map bounds after interaction
-            map_data = st_folium(map_obj, use_container_width=True, height=500, returned_objects=["bounds"])
-        else:
-            map_data = {}
 
-    with col2:
-        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
+        # Validar datos para el mapa
+        if filtered_df.empty:
+            st.warning("No projects to display.")
+            st.stop()
 
-    # --- 🔍 SPATIAL FILTERING: Only projects visible in current map view ---
-    displayed_df = filtered_df.copy()
+        map_df = filtered_df.dropna(subset=['Latitude', 'Longitude']).copy()
+        map_df = map_df[
+            (map_df['Latitude'].between(-90, 90)) &
+            (map_df['Longitude'].between(-180, 180))
+        ]
+        if map_df.empty:
+            st.warning("No valid coordinates to display on map.")
+            st.stop()
 
-    if 'bounds' in map_data and map_data['bounds']:
+        # Crear mapa
         try:
-            bounds = map_data['bounds']
-            sw = bounds['southWest']
-            ne = bounds['northEast']
-            displayed_df = displayed_df[
-                (displayed_df['Latitude'] >= sw['lat']) &
-                (displayed_df['Latitude'] <= ne['lat']) &
-                (displayed_df['Longitude'] >= sw['lng']) &
-                (displayed_df['Longitude'] <= ne['lng'])
-            ]
+            center_lat = map_df['Latitude'].mean()
+            center_lon = map_df['Longitude'].mean()
+
+            m = folium.Map(
+                location=[center_lat, center_lon],
+                zoom_start=6,
+                tiles="OpenStreetMap",
+                control_scale=True
+            )
+
+            for _, row in map_df.iterrows():
+                popup = f"<b>{row['Project_Name']}</b><br>{row['Customer_Type']}"
+                folium.CircleMarker(
+                    location=[row['Latitude'], row['Longitude']],
+                    radius=8,
+                    popup=popup,
+                    tooltip=row['Project_Name'],
+                    fillColor="#07b9d1",
+                    fillOpacity=0.7,
+                    color="white",
+                    weight=1
+                ).add_to(m)
+
+            # Renderizar mapa y obtener bounds
+            map_data = st_folium(
+                m,
+                key="map_interactive",
+                height=500,
+                use_container_width=True,
+                returned_objects=["bounds"],
+                sticky=True,
+            )
         except Exception as e:
-            st.warning("🗺️ Could not filter by map bounds: " + str(e))
+            st.error("❌ Failed to generate map. Please check your data or refresh.")
+            st.stop()
 
-    # Show how many projects are visible
-    st.write(f"🔍 **{len(displayed_df)} projects visible in current map view**")
-
-    # Update chart with spatially filtered data
     with col2:
-        chart = create_service_distribution(displayed_df)
-        if chart:
+        st.markdown('<div class="section-header">📊 Services</div>', unsafe_allow_html=True)
+
+    # --- FILTRO ESPACIAL: Proyectos visibles en el mapa ---
+    displayed_df = map_df.copy()  # Por defecto, todos los filtrados
+
+    if map_data and isinstance(map_data, dict):
+        bounds = map_data.get("bounds")
+        if bounds:
+            try:
+                sw = bounds.get("southWest")
+                ne = bounds.get("northEast")
+                if sw and ne and all(k in sw and k in ne for k in ['lat', 'lng']):
+                    lat_min, lon_min = sw['lat'], sw['lng']
+                    lat_max, lon_max = ne['lat'], ne['lng']
+                    displayed_df = map_df[
+                        (map_df['Latitude'] >= lat_min) &
+                        (map_df['Latitude'] <= lat_max) &
+                        (map_df['Longitude'] >= lon_min) &
+                        (map_df['Longitude'] <= lon_max)
+                    ]
+                    st.write(f"📍 **{len(displayed_df)} projects in current view**")
+                else:
+                    st.write("🔍 Pan or zoom the map to filter projects")
+            except Exception as e:
+                st.write("🔄 Adjust map to update view")
+        else:
+            st.write("🖱️ Use the map to filter projects")
+    else:
+        st.write("🔄 Map loading... interact to enable filtering")
+
+    # --- GRÁFICO ---
+    with col2:
+        chart = create_service_chart(displayed_df)
+        if chart is not None:
             st.plotly_chart(chart, use_container_width=True)
         else:
-            st.write("No service data available in current view.")
+            st.write("No service data available.")
 
-    # Update gallery with spatially filtered data
-    display_project_gallery(displayed_df)
+    # --- GALERÍA ---
+    display_gallery(displayed_df)
 
     st.markdown("---")
     st.caption("© 2025 Kronos GMT | Created by Juan Cano")
