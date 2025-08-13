@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import folium
-from streamlit_folium import st_folium, folium_static
+from streamlit_folium import st_folium
 from urllib.parse import urlparse
 import requests
 import io
@@ -151,7 +151,7 @@ def create_service_distribution(df):
     fig.update_layout(paper_bgcolor='#1a242e')
     return fig
 
-def create_plotly_map(df):
+def create_plotly_map(df, zoom_level):
     if df.empty:
         st.warning("No data available for map")
         return None
@@ -162,7 +162,7 @@ def create_plotly_map(df):
         hover_name="Project_Name",
         hover_data=["Customer_Type"],
         color="Customer_Type",
-        zoom=8,
+        zoom=zoom_level,
         height=600
     )
     fig.update_layout(mapbox_style="open-street-map")
@@ -170,6 +170,7 @@ def create_plotly_map(df):
 
 def display_project_gallery(df):
     if 'Image' not in df.columns:
+        st.warning("No Image column in data")
         return
     projects = df[df['Image'].apply(lambda x: is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME))]
     if projects.empty:
@@ -206,18 +207,24 @@ def main():
         selected_service = st.selectbox("🌎 Service", services, index=0)
         use_bounds_filter = st.checkbox("Filter by map bounds", value=True)
         use_plotly_map = st.checkbox("Use Plotly map (Fallback)", value=False)
-        st.button("Reset Filters", on_click=lambda: st.ruterun())
+        st.button("Reset Filters", on_click=lambda: (
+            st.session_state.update({
+                'map_center': [df['Latitude'].mean(), df['Longitude'].mean()] if not df.empty else [0, 0],
+                'map_zoom': 8,
+                'current_bounds': None
+            }) or st.rerun()
+        ))
 
     # Initialize session state for map
     if 'map_center' not in st.session_state:
-        st.session_state.map_center = [filtered_df['Latitude'].mean(), filtered_df['Longitude'].mean()] if not filtered_df.empty else [0, 0]
+        st.session_state.map_center = [df['Latitude'].mean(), df['Longitude'].mean()] if not df.empty else [0, 0]
     if 'map_zoom' not in st.session_state:
         st.session_state.map_zoom = 8
     if 'current_bounds' not in st.session_state:
         st.session_state.current_bounds = None
 
     # Apply filters including bounds
-    bounds = st.session_state.current_bounds if use_bounds_filter else None
+    bounds = st.session_state.current_bounds if use_bounds_filter and not use_plotly_map else None
     filtered_df = filter_data(df, selected_type, selected_service, bounds)
 
     col1, col2 = st.columns([2, 1])
@@ -225,7 +232,7 @@ def main():
         st.subheader("📍 Project Location")
         with st.spinner("Loading map..."):
             if use_plotly_map:
-                map_fig = create_plotly_map(filtered_df)
+                map_fig = create_plotly_map(filtered_df, st.session_state.map_zoom)
                 if map_fig:
                     st.plotly_chart(map_fig, use_container_width=True)
                     st.info("Using Plotly map (bounds filtering not supported)")
@@ -247,13 +254,18 @@ def main():
                         st.write("Map State (Debug):", map_state)
 
                     # Update session state
-                    if map_state and use_bounds_filter:
+                    if map_state and not use_plotly_map:
+                        changed = False
                         if "center" in map_state and map_state["center"] != st.session_state.map_center:
                             st.session_state.map_center = map_state["center"]
+                            changed = True
                         if "zoom" in map_state and map_state["zoom"] != st.session_state.map_zoom:
                             st.session_state.map_zoom = map_state["zoom"]
-                        if "bounds" in map_state and map_state["bounds"] != st.session_state.current_bounds:
+                            changed = True
+                        if use_bounds_filter and "bounds" in map_state and map_state["bounds"] != st.session_state.current_bounds:
                             st.session_state.current_bounds = map_state["bounds"]
+                            changed = True
+                        if changed:
                             st.rerun()
 
     with col2:
