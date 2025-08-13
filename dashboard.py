@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import folium
-from streamlit_folium import st_folium, folium_static
+from streamlit_folium import st_folium
 from urllib.parse import urlparse
 import requests
 import io
@@ -109,8 +109,8 @@ def create_interactive_map(df, initial_center, initial_zoom):
         zoom_start=initial_zoom,
         zoom_control=True,
         scrollWheelZoom=True,
-        tiles="OpenStreetMap",
-        attr="OpenStreetMap"
+        tiles="CartoDB Positron",
+        attr="CartoDB"
     )
     for _, row in df.iterrows():
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
@@ -177,7 +177,6 @@ def main():
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
         use_bounds_filter = st.checkbox("Filter by map bounds", value=False)
-        use_folium_static = st.checkbox("Use folium_static (Fallback)", value=False)
         st.button("Reset Filters", on_click=lambda: st.rerun())
 
     filtered_df = filter_data(df, selected_type, selected_service)
@@ -187,74 +186,71 @@ def main():
         st.session_state.map_center = [filtered_df['Latitude'].mean(), filtered_df['Longitude'].mean()] if not filtered_df.empty else [0, 0]
     if 'map_zoom' not in st.session_state:
         st.session_state.map_zoom = 8
-    if 'current_bounds' not in st.session_state:
-        st.session_state.current_bounds = None
-
-    # Apply persisted bounds filter if enabled
-    if use_bounds_filter and st.session_state.current_bounds:
-        bounds = st.session_state.current_bounds
-        min_lat = bounds["_southWest"]["lat"]
-        max_lat = bounds["_northEast"]["lat"]
-        min_lon = bounds["_southWest"]["lng"]
-        max_lon = bounds["_northEast"]["lng"]
-        filtered_df = filtered_df[
-            (filtered_df["Latitude"] >= min_lat) & (filtered_df["Latitude"] <= max_lat) &
-            (filtered_df["Longitude"] >= min_lon) & (filtered_df["Longitude"] <= max_lon)
-        ]
 
     col1, col2 = st.columns([2, 1])
+
+    # --- MAPA CON ESTADO PERSISTENTE ---
     with col1:
-        st.subheader("📍 Project Location")
-        with st.spinner("Loading map..."):
-            # Store expected state for change detection
-            expected_center = st.session_state.map_center
-            expected_zoom = st.session_state.map_zoom
-            expected_bounds = st.session_state.current_bounds
+        st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
 
-            map_obj = create_interactive_map(filtered_df, expected_center, expected_zoom)
-            if map_obj:
-                if use_folium_static:
-                    folium_static(map_obj, width=1000, height=600)
-                    st.info("Using folium_static for map rendering")
-                else:
-                    map_state = st_folium(
-                        map_obj,
-                        center=expected_center,
-                        zoom=expected_zoom,
-                        use_container_width=True,
-                        height=600,
-                        key="map",
-                        returned_objects=["center", "zoom", "bounds", "last_clicked"]
-                    )
+        # Solo recrear el mapa si los filtros cambian, no en cada interacción del mapa
+        map_key = f"map_{selected_type}_{selected_service}"
+        if map_key not in st.session_state:
+            st.session_state[map_key] = create_interactive_map(filtered_df)
 
-                    # Debug map state
-                    if map_state:
-                        st.write("Map State (Debug):", map_state)
+        map_obj = st.session_state[map_key]
 
-                    # Detect changes and update session state
-                    changed = False
-                    if map_state:
-                        if map_state.get("center") != expected_center:
-                            st.session_state.map_center = map_state["center"]
-                            changed = True
-                        if map_state.get("zoom") != expected_zoom:
-                            st.session_state.map_zoom = map_state["zoom"]
-                            changed = True
-                        if use_bounds_filter and map_state.get("bounds") != expected_bounds:
-                            st.session_state.current_bounds = map_state["bounds"]
-                            changed = True
-
-                    # If changed, rerun to apply updates
-                    if changed:
-                        st.rerun()
+        if map_obj:
+            map_data = st_folium(
+                map_obj,
+                key=f"folium_{map_key}",
+                use_container_width=True,
+                height=500,
+                returned_objects=["bounds"],
+                # Wait for interaction
+                sticky=True,  # Mantiene el zoom/posición
+            )
+        else:
+            map_data = {}
 
     with col2:
-        st.subheader("📊 Services Provided")
-        chart = create_service_distribution(filtered_df)
-        if chart:
-            st.plotly_chart(chart, use_container_width=True)
+        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
 
-    display_project_gallery(filtered_df)
+    # --- FILTRO ESPACIAL: Usar bounds del mapa ---
+    displayed_df = filtered_df.copy()
+
+    # Mostrar bounds para depuración (opcional, luego puedes quitarlo)
+    # st.write("Debug - Map Data:", map_data)
+
+    if map_data and 'bounds' in map_data and map_data['bounds']:
+        try:
+            bounds = map_data['bounds']
+            sw = bounds['southWest']
+            ne = bounds['northEast']
+
+            displayed_df = filtered_df[
+                (filtered_df['Latitude'] >= sw['lat']) &
+                (filtered_df['Latitude'] <= ne['lat']) &
+                (filtered_df['Longitude'] >= sw['lng']) &
+                (filtered_df['Longitude'] <= ne['lng'])
+            ]
+
+            st.write(f"✅ **{len(displayed_df)} projects within current map view**")
+        except Exception as e:
+            st.warning(f"❌ Error in spatial filter: {e}")
+    else:
+        st.write("🔍 **Pan or zoom the map to filter projects by area**")
+
+    # Actualizar gráfico
+    with col2:
+        chart = create_service_distribution(displayed_df)
+        if chart is not None:
+            st.plotly_chart(chart, use_container_width=True)
+        else:
+            st.write("No service data in current view.")
+
+    # Actualizar galería
+    display_project_gallery(displayed_df)
 
     st.caption("© 2025 Kronos GMT")
 
