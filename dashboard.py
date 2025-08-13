@@ -97,7 +97,7 @@ def is_valid_cloudinary_url(url, cloud_name=None):
     return parsed.netloc == "res.cloudinary.com"
 
 
-@st.cache_data
+@st.cache_data(ttl=60)  # Cache for 60 seconds to allow data refresh
 def load_data():
     url = "https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"
     try:
@@ -115,6 +115,8 @@ def load_data():
 
         if 'Customer_Type' in df.columns:
             df['Customer_Type'] = df['Customer_Type'].fillna('Unknown')
+            # Clean up Customer_Type values - strip whitespace and standardize case
+            df['Customer_Type'] = df['Customer_Type'].str.strip().str.title()
         else:
             df['Customer_Type'] = 'Unknown'
 
@@ -325,7 +327,7 @@ def create_navigation_sidebar():
 
 
 def main():
-    st.markdown('<h1 class="main-header">Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🚀 Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
     df = load_data()
     if df is None or df.empty:
@@ -337,11 +339,24 @@ def main():
     # Sidebar filters
     with st.sidebar:
         st.markdown("### 🔍 Filters")
+        
+        # Add a button to refresh data cache
+        if st.button("🔄 Refresh Data"):
+            st.cache_data.clear()
+            st.rerun()
+            
         types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
         selected_type = st.selectbox("🏢 Project Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
-
+        if st.button("🔄 Reset Filters"):
+            st.rerun()
+        
+        # Debug: Show current customer types
+        st.markdown("**Current Types in Data:**")
+        unique_types = df['Customer_Type'].value_counts()
+        for type_name, count in unique_types.items():
+            st.write(f"• {type_name}: {count}")
         st.markdown("---")
 
     # Apply filters
