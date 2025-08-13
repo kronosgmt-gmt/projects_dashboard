@@ -88,12 +88,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-def get_project_type_colors(customer_types):
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-    valid_types = [t for t in customer_types if pd.notna(t)]
-    return {t: colors[i % len(colors)] for i, t in enumerate(valid_types)}
-
-
 def is_valid_cloudinary_url(url, cloud_name=None):
     if not url or pd.isna(url) or not isinstance(url, str):
         return False
@@ -185,21 +179,16 @@ def filter_data(df, project_type_filter, service_filter):
 
 
 @st.cache_resource
-def create_interactive_map(df):
+def create_simple_map(df):
+    """Simplified map with consistent blue and orange markers"""
     if df.empty or len(df) == 0:
         st.warning("No data to display on map.")
         return None
-
-    if 'Customer_Type' not in df.columns:
-        df['Customer_Type'] = 'Unknown'
 
     df = df.dropna(subset=['Latitude', 'Longitude'])
     if df.empty:
         st.warning("No valid coordinates for mapping.")
         return None
-
-    unique_types = df['Customer_Type'].dropna().unique()
-    color_map = get_project_type_colors(unique_types)
 
     center_lat = df['Latitude'].mean()
     center_lon = df['Longitude'].mean()
@@ -207,15 +196,17 @@ def create_interactive_map(df):
     m = folium.Map(
         location=[center_lat, center_lon],
         zoom_start=6,
-        tiles="OpenStreetMap",
-        attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        tiles="OpenStreetMap"
     )
 
-    marker_cluster = MarkerCluster().add_to(m)
-
-    for _, row in df.iterrows():
+    # Define only two colors: blue and orange
+    colors = ['#1f77b4', '#ff7f0e']  # Blue and Orange
+    
+    for i, (_, row) in enumerate(df.iterrows()):
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
-        color = color_map.get(row['Customer_Type'], '#888888')
+        
+        # Alternate between blue and orange
+        color = colors[i % 2]
 
         folium.CircleMarker(
             location=[row['Latitude'], row['Longitude']],
@@ -223,21 +214,10 @@ def create_interactive_map(df):
             popup=popup,
             tooltip=row['Project_Name'],
             fillColor=color,
-            fillOpacity=0.7,
+            fillOpacity=0.8,
             color='white',
-            weight=1
-        ).add_to(marker_cluster)
-
-    # Add legend
-    legend_html = '''
-    <div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: #1a252f; 
-                border: 2px solid #07b9d1; z-index: 9999; padding: 10px; border-radius: 5px; font-size: 14px;">
-        <p style="color: white; margin: 0 0 5px 0;"><b>Legend</b></p>
-    '''
-    for t, c in color_map.items():
-        legend_html += f'<p style="margin: 3px 0; color: white;"><i class="fa fa-circle" style="color:{c}; margin-right: 8px;"></i> {t}</p>'
-    legend_html += '</div>'
-    m.get_root().html.add_child(folium.Element(legend_html))
+            weight=2
+        ).add_to(m)
 
     return m
 
@@ -249,7 +229,7 @@ def create_service_distribution(df):
     if not all_services:
         return None
     counts = pd.Series(all_services).value_counts()
-    fig = px.pie(values=counts.values, names=counts.index, title="Services")
+    fig = px.pie(values=counts.values, names=counts.index, title="Services Distribution")
     fig.update_traces(textinfo='percent+label')
     fig.update_layout(
         paper_bgcolor='#1a242e',
@@ -265,16 +245,16 @@ def display_project_gallery(df):
         return
     projects = df[df['Image'].apply(lambda x: is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME))]
     if projects.empty:
-        st.write("No images available in current view.")
+        st.write("No images available.")
         return
-    st.markdown('<div class="section-header">🖼️ Gallery</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">🖼️ Project Gallery</div>', unsafe_allow_html=True)
     cols = st.columns(4)
     for i, (_, p) in enumerate(projects.head(8).iterrows()):
         col = cols[i % 4]
         with col:
             st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
             if pd.notna(p.get('Blog_Link')):
-                st.markdown(f"[📖 See More about this project]({p['Blog_Link']})", unsafe_allow_html=True)
+                st.markdown(f"[📖 Learn More]({p['Blog_Link']})", unsafe_allow_html=True)
 
 
 def create_navigation_sidebar():
@@ -301,7 +281,7 @@ def create_navigation_sidebar():
 
 
 def main():
-    st.markdown('<h1 class="main-header"> Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🚀 Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
     df = load_data()
     if df is None or df.empty:
@@ -312,73 +292,52 @@ def main():
 
     # Sidebar filters
     with st.sidebar:
-        st.markdown("### Filters")
+        st.markdown("### 🔍 Filters")
         types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
-        selected_type = st.selectbox("🏢 Type", types, index=0)
+        selected_type = st.selectbox("🏢 Project Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
-        if st.button("Reset Filters"):
+        if st.button("🔄 Reset Filters"):
             st.rerun()
         st.markdown("---")
 
-    # Apply non-spatial filters first
+    # Apply filters
     filtered_df = filter_data(df, selected_type, selected_service)
 
     if filtered_df.empty:
-        st.error("No projects match the selected filters.")
+        st.error("❌ No projects match the selected filters.")
         st.stop()
 
     create_navigation_sidebar()
+
+    # Show statistics
+    st.markdown(f"📊 **Showing {len(filtered_df)} of {len(df)} total projects**")
 
     # Layout
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
-        map_obj = create_interactive_map(filtered_df)
+        st.markdown('<div class="section-header">📍 Project Locations</div>', unsafe_allow_html=True)
+        map_obj = create_simple_map(filtered_df)
         if map_obj is not None:
-            # Use st_folium to render and get bounds
-            map_data = st_folium(map_obj, use_container_width=True, height=500, returned_objects=["bounds"])
+            st_folium(map_obj, use_container_width=True, height=500)
         else:
-            st.warning("Map could not be generated.")
-            map_data = {}
+            st.warning("⚠️ Map could not be generated.")
 
     with col2:
-        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
-
-    # --- 🔍 SPATIAL FILTERING: Only projects visible in current map view ---
-    displayed_df = filtered_df.copy()
-
-    if map_data and 'bounds' in map_data and map_data['bounds']:
-        try:
-            bounds = map_data['bounds']
-            sw = bounds['southWest']
-            ne = bounds['northEast']
-            displayed_df = displayed_df[
-                (displayed_df['Latitude'] >= sw['lat']) &
-                (displayed_df['Latitude'] <= ne['lat']) &
-                (displayed_df['Longitude'] >= sw['lng']) &
-                (displayed_df['Longitude'] <= ne['lng'])
-            ]
-        except Exception as e:
-            st.warning("🗺️ Could not filter by map bounds: " + str(e))
-
-    # Show how many projects are visible
-    st.write(f"🔍 **{len(displayed_df)} projects visible in current map view**")
-
-    # Update chart with spatially filtered data
-    with col2:
-        chart = create_service_distribution(displayed_df)
+        st.markdown('<div class="section-header">📊 Services Overview</div>', unsafe_allow_html=True)
+        # Use filtered_df (by type and service filters) not displayed_df (spatial filter)
+        chart = create_service_distribution(filtered_df)
         if chart:
             st.plotly_chart(chart, use_container_width=True)
         else:
-            st.write("No service data available in current view.")
+            st.write("No service data available for selected filters.")
 
-    # Update gallery with spatially filtered data
-    display_project_gallery(displayed_df)
+    # Project gallery - uses filtered data (by type/service), not spatial filtering
+    display_project_gallery(filtered_df)
 
     st.markdown("---")
-    st.caption("© 2025 Kronos GMT | Created by Juan Cano")
+    st.caption("© 2025 Kronos GMT | Dashboard by Juan Cano")
 
 
 if __name__ == "__main__":
