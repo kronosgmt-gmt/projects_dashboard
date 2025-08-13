@@ -319,62 +319,61 @@ def main():
 
     with col1:
         st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
-        map_obj = create_interactive_map(filtered_df)
-        if map_obj:
-            # 🔁 Clave: Guardar el estado del mapa y sus bounds
-            map_data = st_folium(
-                map_obj,
-                use_container_width=True,
-                height=500,
-                returned_objects=["bounds"],
-                # Opcional: solo devolver tras soltar el mouse (mejor UX)
-                feature_group_to_add=None,
-            )
-        else:
-            map_data = {}
+
+        # Persist the map object using st.session_state
+        if "map_obj" not in st.session_state:
+            st.session_state.map_obj = create_interactive_map(filtered_df)
+        map_obj = st.session_state.map_obj
+
+        # Capture map bounds after interaction
+        map_data = st_folium(
+            map_obj,
+            key="interactive_map",
+            use_container_width=True,
+            height=500,
+            returned_objects=["bounds"],
+            sticky=True,  # Maintain zoom/position
+        )
 
     with col2:
         st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
 
-    # --- 🔍 FILTRO ESPACIAL: Solo proyectos dentro del área visible ---
+    # --- 🔍 SPATIAL FILTERING: Only projects visible in current map view ---
     displayed_df = filtered_df.copy()
 
-    # Verificar si hay bounds válidos
+    # Debug: Log the bounds data
     if map_data and 'bounds' in map_data and map_data['bounds']:
-        bounds = map_data['bounds']
         try:
+            bounds = map_data['bounds']
             sw = bounds['southWest']
             ne = bounds['northEast']
 
-            # ✅ Filtrar por bounding box
-            displayed_df = filtered_df[
-                (filtered_df['Latitude'] >= sw['lat']) &
-                (filtered_df['Latitude'] <= ne['lat']) &
-                (filtered_df['Longitude'] >= sw['lng']) &
-                (filtered_df['Longitude'] <= ne['lng'])
-            ]
+            # Validate bounds structure
+            if isinstance(sw, dict) and isinstance(ne, dict):
+                displayed_df = displayed_df[
+                    (displayed_df['Latitude'] >= sw['lat']) &
+                    (displayed_df['Latitude'] <= ne['lat']) &
+                    (displayed_df['Longitude'] >= sw['lng']) &
+                    (displayed_df['Longitude'] <= ne['lng'])
+                ]
 
-            st.write(f"✅ **{len(displayed_df)} projects within current map view**")
-
+                st.write(f"✅ **{len(displayed_df)} projects within current map view**")
+            else:
+                st.warning("⚠️ Invalid bounds structure. Unable to filter projects.")
         except Exception as e:
-            st.warning("🗺️ Error filtering by map bounds: " + str(e))
-            displayed_df = filtered_df  # fallback
+            st.error(f"❌ Error filtering by map bounds: {str(e)}")
     else:
-        # Si no hay interacción, mostramos todos los filtrados
         st.write("🔍 **Pan or zoom the map to filter projects by area**")
-        # Aquí puedes optar por mostrar todos o ninguno
-        # Por ahora, mostramos todos los previamente filtrados
-        displayed_df = filtered_df
 
-    # Actualizar gráfico con datos visibles
+    # Update chart with spatially filtered data
     with col2:
         chart = create_service_distribution(displayed_df)
         if chart is not None:
             st.plotly_chart(chart, use_container_width=True)
         else:
-            st.write("No service data to display.")
+            st.write("No service data in current view.")
 
-    # Actualizar galería
+    # Update gallery with spatially filtered data
     display_project_gallery(displayed_df)
 
     st.markdown("---")
