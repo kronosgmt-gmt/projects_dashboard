@@ -70,7 +70,7 @@ def load_data():
 
         if 'Image' in df.columns and CLOUDINARY_CLOUD_NAME:
             df['Image'] = df['Image'].apply(
-                lambda x: f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto,w_300/{x.strip()}"
+                lambda x: f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto,w_300,c_fill,g_auto/{x.strip()}"
                 if pd.notna(x) and isinstance(x, str) and x.strip() and not is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME)
                 else x
             )
@@ -97,19 +97,18 @@ def filter_data(df, project_type_filter, service_filter):
         filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
     return filtered_df
 
-@st.cache_data
-def create_interactive_map(df):
+@st.cache_data(hash_funcs={pd.DataFrame: id})
+def create_interactive_map(df, initial_center, initial_zoom):
     if df.empty:
         st.warning("No data available for map")
         return None
     unique_types = df['Customer_Type'].dropna().unique()
     color_map = get_project_type_colors(unique_types)
-    center_lat = df['Latitude'].mean()
-    center_lon = df['Longitude'].mean()
     m = folium.Map(
-        location=[center_lat, center_lon],
-        zoom_start=8,
+        location=initial_center,
+        zoom_start=initial_zoom,
         zoom_control=True,
+        scrollWheelZoom=True,
         tiles="CartoDB Positron",
         attr="CartoDB"
     )
@@ -182,13 +181,32 @@ def main():
 
     filtered_df = filter_data(df, selected_type, selected_service)
 
+    # Initialize session state for map
+    if 'map_center' not in st.session_state:
+        st.session_state.map_center = [filtered_df['Latitude'].mean(), filtered_df['Longitude'].mean()] if not filtered_df.empty else [0, 0]
+    if 'map_zoom' not in st.session_state:
+        st.session_state.map_zoom = 8
+
     col1, col2 = st.columns([2, 1])
     with col1:
         st.subheader("📍 Project Location")
         with st.spinner("Loading map..."):
-            map_obj = create_interactive_map(filtered_df)
+            map_obj = create_interactive_map(filtered_df, st.session_state.map_center, st.session_state.map_zoom)
             if map_obj:
-                map_state = st_folium(map_obj, use_container_width=True, height=600, key="map", return_state="all")
+                map_state = st_folium(
+                    map_obj,
+                    center=st.session_state.map_center,
+                    zoom=st.session_state.map_zoom,
+                    use_container_width=True,
+                    height=600,
+                    key="map",
+                    returned_objects=["center", "zoom", "bounds"]
+                )
+
+                # Update session state with new map state
+                if map_state and "center" in map_state and "zoom" in map_state:
+                    st.session_state.map_center = map_state["center"]
+                    st.session_state.map_zoom = map_state["zoom"]
 
                 # Debug map state
                 if map_state:
