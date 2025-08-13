@@ -68,13 +68,14 @@ def load_data():
 
         if 'Image' in df.columns and CLOUDINARY_CLOUD_NAME:
             df['Image'] = df['Image'].apply(
-                lambda x: f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/{x.strip()}"
+                lambda x: f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto/{x.strip()}"
                 if pd.notna(x) and isinstance(x, str) and x.strip() and not is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME)
                 else x
             )
 
         return df
-    except:
+    except (requests.RequestException, pd.errors.ParserError) as e:
+        st.error(f"Failed to load data: {str(e)}")
         return None
 
 def create_service_mapping(df):
@@ -92,6 +93,7 @@ def filter_data(df, project_type_filter, service_filter):
         filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
     return filtered_df
 
+@st.cache_data
 def create_interactive_map(df):
     if df.empty:
         return None
@@ -99,7 +101,7 @@ def create_interactive_map(df):
     color_map = get_project_type_colors(unique_types)
     center_lat = df['Latitude'].mean()
     center_lon = df['Longitude'].mean()
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=6)
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=8, zoom_control=True, tiles="OpenStreetMap")
     for _, row in df.iterrows():
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
         color = color_map.get(row['Customer_Type'], '#888888')
@@ -138,7 +140,10 @@ def display_project_gallery(df):
     for i, (_, p) in enumerate(projects.head(8).iterrows()):
         col = cols[i % 4]
         with col:
-            st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
+            try:
+                st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
+            except Exception as e:
+                st.warning(f"Failed to load image for {p['Project_Name']}: {str(e)}")
             if pd.notna(p.get('Blog_Link')):
                 st.markdown(f"[📖 See More]({p['Blog_Link']})")
 
@@ -168,7 +173,12 @@ def main():
         st.subheader("📍 Project Location")
         map_obj = create_interactive_map(filtered_df)
         if map_obj:
-            map_state = st_folium(map_obj, use_container_width=True, height=500)
+            with st.spinner("Loading map..."):
+                map_state = st_folium(map_obj, use_container_width=True, height=600, return_state="all")
+
+            # Debug bounds
+            if map_state and "bounds" in map_state:
+                st.write("Map Bounds:", map_state["bounds"])
 
             # Si hay límites visibles, filtrar
             if map_state and "bounds" in map_state:
