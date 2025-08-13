@@ -332,50 +332,27 @@ def main():
 
     # Layout
     col1, col2 = st.columns([2, 1])
-
     with col1:
         st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
         map_obj = create_interactive_map(filtered_df)
-        if map_obj is not None:
-            # Use st_folium to render and get bounds
-            map_data = st_folium(map_obj, use_container_width=True, height=500, returned_objects=["bounds"])
-        else:
-            st.warning("Map could not be generated.")
-            map_data = {}
+        if map_obj:
+            st_folium(map_obj, use_container_width=True, height=500)
 
     with col2:
         st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
-
-    # --- 🔍 SPATIAL FILTERING: Only projects visible in current map view ---
-    displayed_df = filtered_df.copy()
-
-    if map_data and 'bounds' in map_data and map_data['bounds']:
-        try:
-            bounds = map_data['bounds']
-            sw = bounds['southWest']
-            ne = bounds['northEast']
-            displayed_df = displayed_df[
-                (displayed_df['Latitude'] >= sw['lat']) &
-                (displayed_df['Latitude'] <= ne['lat']) &
-                (displayed_df['Longitude'] >= sw['lng']) &
-                (displayed_df['Longitude'] <= ne['lng'])
-            ]
-        except Exception as e:
-            st.warning("🗺️ Could not filter by map bounds: " + str(e))
-
-    # Show how many projects are visible
-    st.write(f"🔍 **{len(displayed_df)} projects visible in current map view**")
-
-    # Update chart with spatially filtered data
-    with col2:
-        chart = create_service_distribution(displayed_df)
+        chart = create_service_distribution(filtered_df)
         if chart:
             st.plotly_chart(chart, use_container_width=True)
-        else:
-            st.write("No service data available in current view.")
 
-    # Update gallery with spatially filtered data
-    display_project_gallery(displayed_df)
+    display_project_gallery(filtered_df)
+
+    """st.markdown('<div class="section-header">📋 Projects</div>', unsafe_allow_html=True)
+    if not filtered_df.empty:
+        display_cols = ['Project_Name', 'Scope of work']
+        available_cols = [c for c in display_cols if c in filtered_df.columns]
+        st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)"""
+    """else:
+        st.warning("No data to show")"""
 
     st.markdown("---")
     st.caption("© 2025 Kronos GMT | Created by Juan Cano")
