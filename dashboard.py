@@ -157,52 +157,55 @@ def filter_data(df, project_type_filter, service_filter):
         filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
     return filtered_df
 
-@st.cache_resource
+@st.cache_data
+def create_service_mapping(df):
+    all_services = set()
+    for services in df['Service_2_list']:
+        if isinstance(services, list):
+            all_services.update(services)
+    return sorted([s for s in all_services if s])
+
+@st.cache_data
+def filter_data(df, project_type_filter, service_filter):
+    filtered_df = df.copy()
+    if project_type_filter != "All":
+        filtered_df = filtered_df[filtered_df['Customer_Type'] == project_type_filter]
+    if service_filter != "All":
+        filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
+    return filtered_df
+
+@st.cache_data
 def create_interactive_map(df):
-    if df.empty or len(df) == 0:
-        st.warning("No data to display on map.")
-        return None
-
-    if 'Customer_Type' not in df.columns:
-        df['Customer_Type'] = 'Unknown'
-
-    df = df.dropna(subset=['Latitude', 'Longitude'])
     if df.empty:
-        st.warning("No valid coordinates for mapping.")
+        st.warning("No data available for map")
         return None
-
     unique_types = df['Customer_Type'].dropna().unique()
     color_map = get_project_type_colors(unique_types)
-
     center_lat = df['Latitude'].mean()
     center_lon = df['Longitude'].mean()
-
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=6)
-
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=8,
+        zoom_control=True,
+        tiles="CartoDB Positron",
+        attr="CartoDB"
+    )
     for _, row in df.iterrows():
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
         color = color_map.get(row['Customer_Type'], '#888888')
-
         folium.CircleMarker(
             location=[row['Latitude'], row['Longitude']],
             radius=8,
-            popup=popup,
+            popup=folium.Popup(popup, max_width=300),
             tooltip=row['Project_Name'],
             fillColor=color,
             fillOpacity=0.7,
             color='white',
             weight=1
         ).add_to(m)
-
-    legend_html = '<div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: #1a252f; border: 2px solid grey; z-index: 9999; padding: 10px; border-radius: 5px;">'
-    legend_html += '<p><b>Legend</b></p>'
-    for t, c in color_map.items():
-        legend_html += f'<p><i class="fa fa-circle" style="color:{c}"></i> {t}</p>'
-    legend_html += '</div>'
-    m.get_root().html.add_child(folium.Element(legend_html))
-
     return m
 
+@st.cache_data
 def create_service_distribution(df):
     if df.empty:
         return None
@@ -220,15 +223,19 @@ def display_project_gallery(df):
         return
     projects = df[df['Image'].apply(lambda x: is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME))]
     if projects.empty:
+        st.warning("No valid images available for gallery")
         return
-    st.markdown('<div class="section-header">🖼️ Gallery</div>', unsafe_allow_html=True)
+    st.markdown('### 🖼️ Gallery')
     cols = st.columns(4)
     for i, (_, p) in enumerate(projects.head(8).iterrows()):
         col = cols[i % 4]
         with col:
-            st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
+            try:
+                st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
+            except Exception as e:
+                st.warning(f"Failed to load image for {p['Project_Name']}: {str(e)}")
             if pd.notna(p.get('Blog_Link')):
-                st.markdown(f"[📖 See More about this project]({p['Blog_Link']})")
+                st.markdown(f"[📖 See More]({p['Blog_Link']})")
 
 def create_navigation_sidebar():
     with st.sidebar:
@@ -439,67 +446,61 @@ def create_navigation_sidebar():
         
         st.markdown("---")
 
+# Main
 def main():
-    st.markdown('<h1 class="main-header"> Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
+    st.title("Kronos GMT - Project Dashboard")
 
     df = load_data()
     if df is None or df.empty:
-        st.stop()
+        st.error("No data loaded")
+        return
 
     service_options = create_service_mapping(df)
 
-    
-    
     with st.sidebar:
         st.markdown("### Filters")
         types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
         selected_type = st.selectbox("🏢 Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
+        use_bounds_filter = st.checkbox("Filter by map bounds", value=False)
         st.button("Reset Filters", on_click=lambda: st.rerun())
-
-
-        st.markdown("---")
 
     filtered_df = filter_data(df, selected_type, selected_service)
 
-    if filtered_df.empty:
-        st.error("No projects match filters.")
-    else:
-        st.write(f"Showing {len(filtered_df)} projects")
-        
-    
-    create_navigation_sidebar()
-
-    
-
     col1, col2 = st.columns([2, 1])
     with col1:
-        st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
-        map_obj = create_interactive_map(filtered_df)
-        if map_obj:
-            st_folium(map_obj, use_container_width=True, height=500)
+        st.subheader("📍 Project Location")
+        with st.spinner("Loading map..."):
+            map_obj = create_interactive_map(filtered_df)
+            if map_obj:
+                map_state = st_folium(map_obj, use_container_width=True, height=600, key="map", return_state="all")
+
+                # Debug map state
+                if map_state:
+                    st.write("Map State (Debug):", map_state)
+
+                # Apply bounds filtering only if enabled
+                if use_bounds_filter and map_state and "bounds" in map_state:
+                    bounds = map_state["bounds"]
+                    min_lat = bounds["_southWest"]["lat"]
+                    max_lat = bounds["_northEast"]["lat"]
+                    min_lon = bounds["_southWest"]["lng"]
+                    max_lon = bounds["_northEast"]["lng"]
+                    filtered_df = filtered_df[
+                        (filtered_df["Latitude"] >= min_lat) & (filtered_df["Latitude"] <= max_lat) &
+                        (filtered_df["Longitude"] >= min_lon) & (filtered_df["Longitude"] <= max_lon)
+                    ]
 
     with col2:
-        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
+        st.subheader("📊 Services Provided")
         chart = create_service_distribution(filtered_df)
         if chart:
             st.plotly_chart(chart, use_container_width=True)
 
     display_project_gallery(filtered_df)
 
-    #desaparecer tabla
-
-    #st.markdown('<div class="section-header">📋 Projects</div>', unsafe_allow_html=True)
-    #if not filtered_df.empty:
-        #display_cols = ['Project_Name', 'Scope of work']
-        #available_cols = [c for c in display_cols if c in filtered_df.columns]
-        #st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
-    #else:
-        #st.warning("No data to show")
-
-    st.markdown("---")
-    st.caption("© 2025 Kronos GMT | Created by Juan Cano")
+    st.caption("© 2025 Kronos GMT")
 
 if __name__ == "__main__":
     main()
