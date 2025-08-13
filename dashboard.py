@@ -304,7 +304,7 @@ def create_navigation_sidebar():
 
 
 def main():
-    st.markdown('<h1 class="main-header">🚀 Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
     df = load_data()
     if df is None or df.empty:
@@ -320,8 +320,7 @@ def main():
         selected_type = st.selectbox("🏢 Project Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
-        if st.button("🔄 Reset Filters"):
-            st.rerun()
+        
         st.markdown("---")
 
     # Apply filters
