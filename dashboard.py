@@ -1,4 +1,3 @@
-#services azul
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -47,13 +46,15 @@ st.markdown("""
         cursor: pointer;
         font-size: 14px;
         font-weight: bold;
-        text-decoration: none; /* Remove underline */
+        text-decoration: none;
     }
     .nav-button:hover {
         background-color: #2c3e50;
         font-weight: bold;
         color: #1a252f;
-        text-decoration: none; /* Remove underline on hover */
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     .logo-container {
         text-align: center;
@@ -62,13 +63,36 @@ st.markdown("""
     .stApp {
         background-color: #1a252f;
     }
+
+    /* Neon effect for Services expander */
+    @keyframes neonPulse {
+        0% { box-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF; border-color: #00FFFF; }
+        25% { box-shadow: 0 0 10px #00CCFF, 0 0 20px #00CCFF; border-color: #00CCFF; }
+        50% { box-shadow: 0 0 20px #0099FF, 0 0 30px #0099FF; border-color: #0099FF; }
+        75% { box-shadow: 0 0 10px #00CCFF, 0 0 20px #00CCFF; border-color: #00CCFF; }
+        100% { box-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF; border-color: #00FFFF; }
+    }
+    div[data-testid="stExpander"] summary {
+        animation: neonPulse 2s infinite;
+        border: 2px solid #00FFFF;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%);
+        padding: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #00FFFF;
+        letter-spacing: 1px;
+        text-shadow: 0 0 5px rgba(113, 217, 11, 0.5);
+    }
 </style>
 """, unsafe_allow_html=True)
+
 
 def get_project_type_colors(customer_types):
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     valid_types = [t for t in customer_types if pd.notna(t)]
     return {t: colors[i % len(colors)] for i, t in enumerate(valid_types)}
+
 
 def is_valid_cloudinary_url(url, cloud_name=None):
     if not url or pd.isna(url) or not isinstance(url, str):
@@ -77,6 +101,7 @@ def is_valid_cloudinary_url(url, cloud_name=None):
     if cloud_name:
         return (parsed.netloc == "res.cloudinary.com" and url.startswith(f"https://res.cloudinary.com/{cloud_name}/"))
     return parsed.netloc == "res.cloudinary.com"
+
 
 @st.cache_data
 def load_data():
@@ -136,18 +161,19 @@ def load_data():
             st.error("❌ No valid projects with coordinates.")
             return None
 
-        #st.success(f"✅ Loaded data from URL: {url}")
         return df
     except Exception as e:
         st.warning(f"⚠️ Failed to load from URL: {str(e)}")
         return None
 
+
 def create_service_mapping(df):
     all_services = set()
     for services in df['Service_2_list']:
         if isinstance(services, list):
             all_services.update(services)
     return sorted([s for s in all_services if s])
+
 
 def filter_data(df, project_type_filter, service_filter):
     filtered_df = df.copy()
@@ -157,55 +183,54 @@ def filter_data(df, project_type_filter, service_filter):
         filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
     return filtered_df
 
-@st.cache_data
-def create_service_mapping(df):
-    all_services = set()
-    for services in df['Service_2_list']:
-        if isinstance(services, list):
-            all_services.update(services)
-    return sorted([s for s in all_services if s])
 
-@st.cache_data
-def filter_data(df, project_type_filter, service_filter):
-    filtered_df = df.copy()
-    if project_type_filter != "All":
-        filtered_df = filtered_df[filtered_df['Customer_Type'] == project_type_filter]
-    if service_filter != "All":
-        filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
-    return filtered_df
-
-@st.cache_data
+@st.cache_resource
 def create_interactive_map(df):
-    if df.empty:
-        st.warning("No data available for map")
+    if df.empty or len(df) == 0:
+        st.warning("No data to display on map.")
         return None
+
+    if 'Customer_Type' not in df.columns:
+        df['Customer_Type'] = 'Unknown'
+
+    df = df.dropna(subset=['Latitude', 'Longitude'])
+    if df.empty:
+        st.warning("No valid coordinates for mapping.")
+        return None
+
     unique_types = df['Customer_Type'].dropna().unique()
     color_map = get_project_type_colors(unique_types)
+
     center_lat = df['Latitude'].mean()
     center_lon = df['Longitude'].mean()
-    m = folium.Map(
-        location=[center_lat, center_lon],
-        zoom_start=8,
-        zoom_control=True,
-        tiles="CartoDB Positron",
-        attr="CartoDB"
-    )
+
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=6)
+
     for _, row in df.iterrows():
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
         color = color_map.get(row['Customer_Type'], '#888888')
+
         folium.CircleMarker(
             location=[row['Latitude'], row['Longitude']],
             radius=8,
-            popup=folium.Popup(popup, max_width=300),
+            popup=popup,
             tooltip=row['Project_Name'],
             fillColor=color,
             fillOpacity=0.7,
             color='white',
             weight=1
         ).add_to(m)
+
+    legend_html = '<div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: #1a252f; border: 2px solid grey; z-index: 9999; padding: 10px; border-radius: 5px;">'
+    legend_html += '<p><b>Legend</b></p>'
+    for t, c in color_map.items():
+        legend_html += f'<p><i class="fa fa-circle" style="color:{c}"></i> {t}</p>'
+    legend_html += '</div>'
+    m.get_root().html.add_child(folium.Element(legend_html))
+
     return m
 
-@st.cache_data
+
 def create_service_distribution(df):
     if df.empty:
         return None
@@ -215,27 +240,26 @@ def create_service_distribution(df):
     counts = pd.Series(all_services).value_counts()
     fig = px.pie(values=counts.values, names=counts.index, title="Services")
     fig.update_traces(textinfo='percent+label')
-    fig.update_layout(paper_bgcolor='#1a242e')
+    fig.update_layout(paper_bgcolor='#1a242e', font_color="white")
     return fig
+
 
 def display_project_gallery(df):
     if 'Image' not in df.columns:
         return
     projects = df[df['Image'].apply(lambda x: is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME))]
     if projects.empty:
-        st.warning("No valid images available for gallery")
+        st.write("No images available in current view.")
         return
-    st.markdown('### 🖼️ Gallery')
+    st.markdown('<div class="section-header">🖼️ Gallery</div>', unsafe_allow_html=True)
     cols = st.columns(4)
     for i, (_, p) in enumerate(projects.head(8).iterrows()):
         col = cols[i % 4]
         with col:
-            try:
-                st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
-            except Exception as e:
-                st.warning(f"Failed to load image for {p['Project_Name']}: {str(e)}")
+            st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
             if pd.notna(p.get('Blog_Link')):
-                st.markdown(f"[📖 See More]({p['Blog_Link']})")
+                st.markdown(f"[📖 See More about this project]({p['Blog_Link']})", unsafe_allow_html=True)
+
 
 def create_navigation_sidebar():
     with st.sidebar:
@@ -248,259 +272,97 @@ def create_navigation_sidebar():
         </div>
         """, unsafe_allow_html=True)
 
-        # CSS para el efecto neón en el botón Services
-        st.markdown("""
-        <style>
-        @keyframes neonPulse {
-            0% { 
-                box-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF !important; 
-                border-color: #00FFFF !important; 
-            }
-            25% { 
-                box-shadow: 0 0 10px #00CCFF, 0 0 20px #00CCFF !important; 
-                border-color: #00CCFF !important; 
-            }
-            50% { 
-                box-shadow: 0 0 20px #0099FF, 0 0 30px #0099FF !important; 
-                border-color: #0099FF !important; 
-            }
-            75% { 
-                box-shadow: 0 0 10px #00CCFF, 0 0 20px #00CCFF !important; 
-                border-color: #00CCFF !important; 
-            }
-            100% { 
-                box-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF !important; 
-                border-color: #00FFFF !important; 
-            }
-        }
+        st.markdown("""<style>.nav-button { text-decoration: none; }</style>""", unsafe_allow_html=True)
 
-        /* Aplicar efecto neón a TODOS los expanders (forzado) */
-        div[data-testid="stExpander"] summary {
-            animation: neonPulse 2s infinite !important;
-            border: 2px solid #00FFFF !important;
-            border-radius: 8px !important;
-            background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%) !important;
-            padding: 12px !important;
-            font-weight: bold !important;
-            text-transform: uppercase !important;
-            color: #00FFFF !important;
-            letter-spacing: 1px !important;
-            text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
-        }
-
-        /* Selector alternativo más específico */
-        .st-expander > div > details > summary {
-            animation: neonPulse 2s infinite !important;
-            border: 2px solid #00FFFF !important;
-            border-radius: 8px !important;
-            background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%) !important;
-            padding: 12px !important;
-            font-weight: bold !important;
-            text-transform: uppercase !important;
-            color: #00FFFF !important;
-            letter-spacing: 1px !important;
-            text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
-        }
-
-        /* Selector aún más específico */
-        .st-expander details summary {
-            animation: neonPulse 2s infinite !important;
-            border: 2px solid #00FFFF !important;
-            border-radius: 8px !important;
-            background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%) !important;
-            padding: 12px !important;
-            font-weight: bold !important;
-            text-transform: uppercase !important;
-            color: #00FFFF !important;
-            letter-spacing: 1px !important;
-            text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
-        }
-
-        /* Botones de navegación normales */
-        .nav-button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            background-color: #34495e;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            text-align: center;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .nav-button:hover {
-            background-color: #2c3e50;
-            font-weight: bold;
-            color: #1a252f;
-            text-decoration: none;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        # JavaScript para forzar el efecto
-        st.components.v1.html("""
-        <script>
-        function forceNeonEffect() {
-            // Esperar a que se cargue la página
-            setTimeout(function() {
-                // Buscar todos los elementos summary
-                const summaries = document.querySelectorAll('summary');
-                
-                summaries.forEach(function(summary) {
-                    if (summary.textContent.includes('Services') || summary.textContent.includes('SERVICES')) {
-                        summary.style.cssText = `
-                            animation: neonPulse 2s infinite !important;
-                            border: 2px solid #00FFFF !important;
-                            border-radius: 8px !important;
-                            background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%) !important;
-                            padding: 12px !important;
-                            font-weight: bold !important;
-                            text-transform: uppercase !important;
-                            color: #71d90b !important;
-                            letter-spacing: 1px !important;
-                            text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
-                            box-shadow: 0 0 10px #00FFFF !important;
-                        `;
-                    }
-                });
-                
-                // También aplicar a todos los summary por si acaso
-                const allSummaries = document.querySelectorAll('div[data-testid="stExpander"] summary');
-                allSummaries.forEach(function(summary) {
-                    summary.style.cssText = `
-                        animation: neonPulse 2s infinite !important;
-                        border: 2px solid #00FFFF !important;
-                        border-radius: 8px !important;
-                        background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%) !important;
-                        padding: 12px !important;
-                        font-weight: bold !important;
-                        text-transform: uppercase !important;
-                        color: #71d90b !important;
-                        letter-spacing: 1px !important;
-                        text-shadow: 0 0 5px rgba(113, 217, 11, 0.5) !important;
-                        box-shadow: 0 0 10px #00FFFF !important;
-                    `;
-                });
-                
-            }, 1000);
-        }
-        
-        // Ejecutar múltiples veces para asegurar que funcione
-        forceNeonEffect();
-        setTimeout(forceNeonEffect, 2000);
-        setTimeout(forceNeonEffect, 3000);
-        
-        </script>
-        """, height=0)
-        
         with st.expander("Services", expanded=False):
-            st.markdown("""
-            <a href="https://www.kronosgmt.com/3D-rendering" target="_blank" class="nav-button">
-                3D Rendering
-            </a>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("""
-            <a href="https://www.kronosgmt.com/CAD-drafting" target="_blank" class="nav-button">
-                CAD Drafting
-            </a>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("""
-            <a href="https://www.kronosgmt.com/takeoffs-schedules" target="_blank" class="nav-button">
-                Takeoffs & Schedules
-            </a>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("""
-            <a href="https://www.kronosgmt.com/GIS-mapping" target="_blank" class="nav-button">
-                GIS Mapping
-            </a>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("""
-            <a href="https://www.kronosgmt.com/automation-workflow-optimization" target="_blank" class="nav-button">
-                Automation & Workflow Optimization
-            </a>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <a href="https://news.kronosgmt.com/" target="_blank" class="nav-button">
-            News
-        </a>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <a href="https://www.kronosgmt.com/#contact" target="_blank" class="nav-button">
-            Contact Us
-        </a>
-        """, unsafe_allow_html=True)
-        
+            st.markdown("""<a href="https://www.kronosgmt.com/3D-rendering" target="_blank" class="nav-button">3D Rendering</a>""", unsafe_allow_html=True)
+            st.markdown("""<a href="https://www.kronosgmt.com/CAD-drafting" target="_blank" class="nav-button">CAD Drafting</a>""", unsafe_allow_html=True)
+            st.markdown("""<a href="https://www.kronosgmt.com/takeoffs-schedules" target="_blank" class="nav-button">Takeoffs & Schedules</a>""", unsafe_allow_html=True)
+            st.markdown("""<a href="https://www.kronosgmt.com/GIS-mapping" target="_blank" class="nav-button">GIS Mapping</a>""", unsafe_allow_html=True)
+            st.markdown("""<a href="https://www.kronosgmt.com/automation-workflow-optimization" target="_blank" class="nav-button">Automation & Workflow Optimization</a>""", unsafe_allow_html=True)
+
+        st.markdown("""<a href="https://news.kronosgmt.com/" target="_blank" class="nav-button">News</a>""", unsafe_allow_html=True)
+        st.markdown("""<a href="https://www.kronosgmt.com/#contact" target="_blank" class="nav-button">Contact Us</a>""", unsafe_allow_html=True)
         st.markdown("---")
 
-# Main
+
 def main():
-    st.title("Kronos GMT - Project Dashboard")
+    st.markdown('<h1 class="main-header"> Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
     df = load_data()
     if df is None or df.empty:
-        st.error("No data loaded")
-        return
+        st.stop()
 
     service_options = create_service_mapping(df)
 
+    # Sidebar filters
     with st.sidebar:
         st.markdown("### Filters")
         types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
         selected_type = st.selectbox("🏢 Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
-        use_bounds_filter = st.checkbox("Filter by map bounds", value=False)
         st.button("Reset Filters", on_click=lambda: st.rerun())
+        st.markdown("---")
 
+    # Apply non-spatial filters first
     filtered_df = filter_data(df, selected_type, selected_service)
 
+    if filtered_df.empty:
+        st.error("No projects match the selected filters.")
+        st.stop()
+
+    create_navigation_sidebar()
+
+    # Layout
     col1, col2 = st.columns([2, 1])
+
     with col1:
-        st.subheader("📍 Project Location")
-        with st.spinner("Loading map..."):
-            map_obj = create_interactive_map(filtered_df)
-            if map_obj:
-                map_state = st_folium(map_obj, use_container_width=True, height=600, key="map", return_state="all")
-
-                # Debug map state
-                if map_state:
-                    st.write("Map State (Debug):", map_state)
-
-                # Apply bounds filtering only if enabled
-                if use_bounds_filter and map_state and "bounds" in map_state:
-                    bounds = map_state["bounds"]
-                    min_lat = bounds["_southWest"]["lat"]
-                    max_lat = bounds["_northEast"]["lat"]
-                    min_lon = bounds["_southWest"]["lng"]
-                    max_lon = bounds["_northEast"]["lng"]
-                    filtered_df = filtered_df[
-                        (filtered_df["Latitude"] >= min_lat) & (filtered_df["Latitude"] <= max_lat) &
-                        (filtered_df["Longitude"] >= min_lon) & (filtered_df["Longitude"] <= max_lon)
-                    ]
+        st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
+        map_obj = create_interactive_map(filtered_df)
+        if map_obj:
+            # Capture map bounds after interaction
+            map_data = st_folium(map_obj, use_container_width=True, height=500, returned_objects=["bounds"])
+        else:
+            map_data = {}
 
     with col2:
-        st.subheader("📊 Services Provided")
-        chart = create_service_distribution(filtered_df)
+        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
+
+    # --- 🔍 SPATIAL FILTERING: Only projects visible in current map view ---
+    displayed_df = filtered_df.copy()
+
+    if 'bounds' in map_data and map_data['bounds']:
+        try:
+            bounds = map_data['bounds']
+            sw = bounds['southWest']
+            ne = bounds['northEast']
+            displayed_df = displayed_df[
+                (displayed_df['Latitude'] >= sw['lat']) &
+                (displayed_df['Latitude'] <= ne['lat']) &
+                (displayed_df['Longitude'] >= sw['lng']) &
+                (displayed_df['Longitude'] <= ne['lng'])
+            ]
+        except Exception as e:
+            st.warning("🗺️ Could not filter by map bounds: " + str(e))
+
+    # Show how many projects are visible
+    st.write(f"🔍 **{len(displayed_df)} projects visible in current map view**")
+
+    # Update chart with spatially filtered data
+    with col2:
+        chart = create_service_distribution(displayed_df)
         if chart:
             st.plotly_chart(chart, use_container_width=True)
+        else:
+            st.write("No service data available in current view.")
 
-    display_project_gallery(filtered_df)
+    # Update gallery with spatially filtered data
+    display_project_gallery(displayed_df)
 
-    st.caption("© 2025 Kronos GMT")
+    st.markdown("---")
+    st.caption("© 2025 Kronos GMT | Created by Juan Cano")
+
 
 if __name__ == "__main__":
     main()
