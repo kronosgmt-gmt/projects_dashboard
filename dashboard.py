@@ -327,7 +327,7 @@ def create_navigation_sidebar():
 
 
 def main():
-    st.markdown('<h1 class="main-header">🚀 Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
     df = load_data()
     if df is None or df.empty:
@@ -349,15 +349,7 @@ def main():
         selected_type = st.selectbox("🏢 Project Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
-        if st.button("🔄 Reset Filters"):
-            st.rerun()
-        
-        # Debug: Show current customer types
-        st.markdown("**Current Types in Data:**")
-        unique_types = df['Customer_Type'].value_counts()
-        for type_name, count in unique_types.items():
-            st.write(f"• {type_name}: {count}")
-        st.markdown("---")
+
 
     # Apply filters
     filtered_df = filter_data(df, selected_type, selected_service)
