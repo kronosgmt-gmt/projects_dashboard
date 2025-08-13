@@ -457,16 +457,9 @@ def main():
     col1, col2 = st.columns([2, 1])
     with col1:
         st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
-        # Use a unique key for the map to ensure it updates correctly
-        map_key = f"map_{selected_type}_{selected_service}"
-        map_obj = create_interactive_map(filtered_df, map_key)
+        map_obj = create_interactive_map(filtered_df)
         if map_obj:
-            map_data = st_folium(map_obj, key=map_key, use_container_width=True, height=500)
-            # Update session state with map bounds when the user interacts with the map
-            if map_data and 'bounds' in map_data:
-                st.session_state['map_bounds'] = map_data['bounds']
-                # Rerun to update the filtered data based on new bounds
-                st.rerun()
+            st_folium(map_obj, use_container_width=True, height=500)
 
     with col2:
         st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
@@ -476,8 +469,15 @@ def main():
 
     display_project_gallery(filtered_df)
 
-    st.markdown("---")
-    st.caption("© 2025 Kronos GMT | Created by Juan Cano")
+    #desaparecer tabla
+
+    #st.markdown('<div class="section-header">📋 Projects</div>', unsafe_allow_html=True)
+    #if not filtered_df.empty:
+        #display_cols = ['Project_Name', 'Scope of work']
+        #available_cols = [c for c in display_cols if c in filtered_df.columns]
+        #st.dataframe(filtered_df[available_cols], use_container_width=True, hide_index=True)
+    #else:
+        #st.warning("No data to show")
 
 if __name__ == "__main__":
     main()
