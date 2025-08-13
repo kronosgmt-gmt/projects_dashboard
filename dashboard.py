@@ -180,10 +180,30 @@ def filter_data(df, project_type_filter, service_filter):
 
 @st.cache_resource
 def get_project_type_colors(customer_types):
-    """Define colors for different project types"""
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-    valid_types = [t for t in customer_types if pd.notna(t)]
-    return {t: colors[i % len(colors)] for i, t in enumerate(valid_types)}
+    """Define fixed colors for specific project types"""
+    # Fixed color mapping
+    fixed_colors = {
+        'Commercial': '#ff7f0e',  # Orange
+        'Residential': '#1f77b4', # Blue
+        'Unknown': '#888888'      # Gray
+    }
+    
+    # Additional colors for other types if they exist
+    extra_colors = ['#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#bcbd22', '#17becf']
+    
+    color_map = {}
+    extra_color_index = 0
+    
+    for customer_type in customer_types:
+        if pd.notna(customer_type):
+            if customer_type in fixed_colors:
+                color_map[customer_type] = fixed_colors[customer_type]
+            else:
+                # Use extra colors for any other types
+                color_map[customer_type] = extra_colors[extra_color_index % len(extra_colors)]
+                extra_color_index += 1
+    
+    return color_map
 
 
 def create_simple_map(df):
@@ -304,7 +324,7 @@ def create_navigation_sidebar():
 
 
 def main():
-    st.markdown('<h1 class="main-header">Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🚀 Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
     df = load_data()
     if df is None or df.empty:
@@ -320,7 +340,8 @@ def main():
         selected_type = st.selectbox("🏢 Project Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
-        
+        if st.button("🔄 Reset Filters"):
+            st.rerun()
         st.markdown("---")
 
     # Apply filters
