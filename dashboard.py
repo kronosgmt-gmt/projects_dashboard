@@ -179,16 +179,30 @@ def filter_data(df, project_type_filter, service_filter):
 
 
 @st.cache_resource
+def get_project_type_colors(customer_types):
+    """Define colors for different project types"""
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    valid_types = [t for t in customer_types if pd.notna(t)]
+    return {t: colors[i % len(colors)] for i, t in enumerate(valid_types)}
+
+
 def create_simple_map(df):
-    """Simplified map with consistent blue and orange markers"""
+    """Map with color coding by project type (no spatial filtering)"""
     if df.empty or len(df) == 0:
         st.warning("No data to display on map.")
         return None
+
+    if 'Customer_Type' not in df.columns:
+        df['Customer_Type'] = 'Unknown'
 
     df = df.dropna(subset=['Latitude', 'Longitude'])
     if df.empty:
         st.warning("No valid coordinates for mapping.")
         return None
+
+    # Get unique types and assign colors
+    unique_types = df['Customer_Type'].dropna().unique()
+    color_map = get_project_type_colors(unique_types)
 
     center_lat = df['Latitude'].mean()
     center_lon = df['Longitude'].mean()
@@ -198,15 +212,13 @@ def create_simple_map(df):
         zoom_start=6,
         tiles="OpenStreetMap"
     )
-
-    # Define only two colors: blue and orange
-    colors = ['#1f77b4', '#ff7f0e']  # Blue and Orange
     
-    for i, (_, row) in enumerate(df.iterrows()):
+    for _, row in enumerate(df.iterrows()):
+        _, row = row
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
         
-        # Alternate between blue and orange
-        color = colors[i % 2]
+        # Use color based on Customer_Type
+        color = color_map.get(row['Customer_Type'], '#888888')
 
         folium.CircleMarker(
             location=[row['Latitude'], row['Longitude']],
@@ -218,6 +230,17 @@ def create_simple_map(df):
             color='white',
             weight=2
         ).add_to(m)
+
+    # Add simple legend
+    legend_html = '''
+    <div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: #1a252f; 
+                border: 2px solid #07b9d1; z-index: 9999; padding: 10px; border-radius: 5px; font-size: 14px;">
+        <p style="color: white; margin: 0 0 5px 0;"><b>Project Types</b></p>
+    '''
+    for project_type, color in color_map.items():
+        legend_html += f'<p style="margin: 3px 0; color: white;"><i class="fa fa-circle" style="color:{color}; margin-right: 8px;"></i> {project_type}</p>'
+    legend_html += '</div>'
+    m.get_root().html.add_child(folium.Element(legend_html))
 
     return m
 
