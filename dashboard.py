@@ -375,7 +375,7 @@ def main():
             st.warning("⚠️ Map could not be generated.")
 
     with col2:
-        st.markdown('<div class="section-header">📊 Services Overview</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
         # Use filtered_df (by type and service filters) not displayed_df (spatial filter)
         chart = create_service_distribution(filtered_df)
         if chart:
