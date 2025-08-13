@@ -1,5 +1,5 @@
-streamlit==1.32.2
-folium
+streamlit
+folium==0.14.0
 streamlit-folium==0.11.1
 pandas
 plotly==5.18.0
