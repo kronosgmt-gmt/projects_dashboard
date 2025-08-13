@@ -1,43 +1,107 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import numpy as np
+from datetime import datetime
 import folium
 from streamlit_folium import st_folium
+from folium.plugins import MarkerCluster
 from urllib.parse import urlparse
+import os
 import requests
 import io
+import streamlit.components.v1 as components
 
-# Configuración de la página
+# Cloudinary configuration
+CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
+
+# Page configuration with dark mode
 st.set_page_config(
-    page_title="Kronos GMT - Project Dashboard",
+    page_title="Kronos GMT Project's Dashboard",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# CSS personalizado (modo oscuro)
+# Custom CSS with dark mode
 st.markdown("""
 <style>
-    .main-header { font-size: 2.5rem; background: linear-gradient(135deg, #1a252f, #2c3e50); color: #ffffff; text-align: center; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; }
+    .main-header { font-size: 2.5rem; background-color: #1a252f; font-weight: bold; color: #ffffff; text-align: center; margin-bottom: 2rem; }
+    .metric-card { background-color: #2c3e50; padding: 1rem; border-radius: 10px; border-left: 5px solid #07b9d1; margin-bottom: 1rem; }
+    .filter-section { background-color: #34495e; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
+    .stSelectbox > label { font-weight: bold; color: #ffffff; }
     .section-header { font-size: 1.5rem; font-weight: bold; color: #ffffff; margin: 1rem 0; border-bottom: 2px solid #07b9d1; padding-bottom: 0.5rem; }
-    .nav-button { display: block; width: 100%; padding: 10px; margin: 5px 0; background-color: #34495e; color: #ffffff; text-decoration: none; border-radius: 5px; text-align: center; font-weight: bold; transition: all 0.3s ease; }
-    .nav-button:hover { background-color: #2c3e50; color: #1a252f; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-    .logo-container { text-align: center; margin-bottom: 20px; }
-    .stApp { background-color: #1a252f; }
-    [data-testid="stExpander"] summary { background: #34495e; color: #07b9d1 !important; border: 2px solid #07b9d1; border-radius: 8px; padding: 12px; font-weight: bold; }
+    .cloudinary-image { max-width: 20vw; height: auto; object-fit: cover; border-radius: 5px; cursor: pointer; }
+    .nav-button {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        background-color: #34495e;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 5px;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        text-decoration: none;
+    }
+    .nav-button:hover {
+        background-color: #2c3e50;
+        font-weight: bold;
+        color: #1a252f;
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .logo-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .stApp {
+        background-color: #1a252f;
+    }
+
+    /* Neon effect for Services expander */
+    @keyframes neonPulse {
+        0% { box-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF; border-color: #00FFFF; }
+        25% { box-shadow: 0 0 10px #00CCFF, 0 0 20px #00CCFF; border-color: #00CCFF; }
+        50% { box-shadow: 0 0 20px #0099FF, 0 0 30px #0099FF; border-color: #0099FF; }
+        75% { box-shadow: 0 0 10px #00CCFF, 0 0 20px #00CCFF; border-color: #00CCFF; }
+        100% { box-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF; border-color: #00FFFF; }
+    }
+    div[data-testid="stExpander"] summary {
+        animation: neonPulse 2s infinite;
+        border: 2px solid #00FFFF;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%);
+        padding: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        color: #00FFFF;
+        letter-spacing: 1px;
+        text-shadow: 0 0 5px rgba(113, 217, 11, 0.5);
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Configuración Cloudinary
-CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
+
+def get_project_type_colors(customer_types):
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    valid_types = [t for t in customer_types if pd.notna(t)]
+    return {t: colors[i % len(colors)] for i, t in enumerate(valid_types)}
+
 
 def is_valid_cloudinary_url(url, cloud_name=None):
     if not url or pd.isna(url) or not isinstance(url, str):
         return False
     parsed = urlparse(url)
     if cloud_name:
-        return parsed.netloc == "res.cloudinary.com" and url.startswith(f"https://res.cloudinary.com/{cloud_name}/")
+        return (parsed.netloc == "res.cloudinary.com" and url.startswith(f"https://res.cloudinary.com/{cloud_name}/"))
     return parsed.netloc == "res.cloudinary.com"
+
 
 @st.cache_data
 def load_data():
@@ -47,40 +111,45 @@ def load_data():
             url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        df = pd.read_csv(io.StringIO(response.text), encoding='utf-8')
-        df.columns = df.columns.str.strip()
+        content = io.StringIO(response.text)
+        df = pd.read_csv(content, encoding='utf-8')
 
-        # Conversión de coordenadas
+        # Data cleaning and validation
+        df.columns = df.columns.str.strip()
         df['Longitude'] = pd.to_numeric(df['Longitude'], errors='coerce')
         df['Latitude'] = pd.to_numeric(df['Latitude'], errors='coerce')
-        df['Customer_Type'] = df['Customer_Type'].fillna('Unknown')
 
-        # Limpieza de servicios
+        if 'Customer_Type' in df.columns:
+            df['Customer_Type'] = df['Customer_Type'].fillna('Unknown')
+        else:
+            df['Customer_Type'] = 'Unknown'
+
         def clean_services(x):
             if pd.isna(x) or not x:
                 return []
             try:
-                x = str(x).strip()
-                if x.startswith('['):
-                    return [s.strip(" '") for s in x.strip("[]").split(',') if s.strip()]
-                return [s.strip() for s in x.split(',') if s.strip()]
+                if isinstance(x, str):
+                    if x.startswith('['):
+                        return [s.strip(" '") for s in x.strip("[]").split(',') if s.strip()]
+                    return [s.strip() for s in x.split(',') if s.strip()]
+                return []
             except:
                 return []
 
-        df['Service_2_list'] = df['Service_2'].apply(clean_services) if 'Service_2' in df.columns else [[] for _ in range(len(df))]
+        if 'Service_2' in df.columns:
+            df['Service_2_list'] = df['Service_2'].apply(clean_services)
+        else:
+            df['Service_2_list'] = [[] for _ in range(len(df))]
 
-        # Validación de columnas requeridas
         required = ['project_id', 'Project_Name', 'Longitude', 'Latitude']
         missing = [col for col in required if col not in df.columns]
         if missing:
             st.error(f"❌ Missing columns: {missing}")
             return None
 
-        # Limpieza de coordenadas
-        df.dropna(subset=['Latitude', 'Longitude'], inplace=True)
+        df.dropna(subset=['Longitude', 'Latitude'], inplace=True)
         df = df[(df['Latitude'].between(-90, 90)) & (df['Longitude'].between(-180, 180))]
 
-        # Ajuste de URLs de imágenes
         if 'Image' in df.columns and CLOUDINARY_CLOUD_NAME:
             df['Image'] = df['Image'].apply(
                 lambda x: f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/{x.strip()}"
@@ -88,180 +157,212 @@ def load_data():
                 else x
             )
 
-        return df if not df.empty else None
+        if df.empty:
+            st.error("❌ No valid projects with coordinates.")
+            return None
+
+        return df
     except Exception as e:
-        st.warning(f"⚠️ Failed to load data: {str(e)}")
+        st.warning(f"⚠️ Failed to load from URL: {str(e)}")
         return None
 
-def filter_data(df, project_type, service):
-    filtered = df.copy()
-    if project_type != "All":
-        filtered = filtered[filtered['Customer_Type'] == project_type]
-    if service != "All":
-        filtered = filtered[filtered['Service_2_list'].apply(lambda x: service in x)]
-    return filtered
 
-def create_map(df):
+def create_service_mapping(df):
+    all_services = set()
+    for services in df['Service_2_list']:
+        if isinstance(services, list):
+            all_services.update(services)
+    return sorted([s for s in all_services if s])
+
+
+def filter_data(df, project_type_filter, service_filter):
+    filtered_df = df.copy()
+    if project_type_filter != "All":
+        filtered_df = filtered_df[filtered_df['Customer_Type'] == project_type_filter]
+    if service_filter != "All":
+        filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
+    return filtered_df
+
+
+@st.cache_resource
+def create_interactive_map(df):
+    if df.empty or len(df) == 0:
+        st.warning("No data to display on map.")
+        return None
+
+    if 'Customer_Type' not in df.columns:
+        df['Customer_Type'] = 'Unknown'
+
+    df = df.dropna(subset=['Latitude', 'Longitude'])
     if df.empty:
+        st.warning("No valid coordinates for mapping.")
         return None
+
+    unique_types = df['Customer_Type'].dropna().unique()
+    color_map = get_project_type_colors(unique_types)
+
     center_lat = df['Latitude'].mean()
     center_lon = df['Longitude'].mean()
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=6, tiles="OpenStreetMap")
+
+    m = folium.Map(location=[center_lat, center_lon], zoom_start=6)
+
     for _, row in df.iterrows():
-        popup = f"<b>{row['Project_Name']}</b><br>{row['Customer_Type']}"
+        popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
+        color = color_map.get(row['Customer_Type'], '#888888')
+
         folium.CircleMarker(
             location=[row['Latitude'], row['Longitude']],
             radius=8,
             popup=popup,
             tooltip=row['Project_Name'],
-            fillColor="#07b9d1",
+            fillColor=color,
             fillOpacity=0.7,
             color='white',
             weight=1
         ).add_to(m)
+
+    legend_html = '<div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: #1a252f; border: 2px solid grey; z-index: 9999; padding: 10px; border-radius: 5px;">'
+    legend_html += '<p><b>Legend</b></p>'
+    for t, c in color_map.items():
+        legend_html += f'<p><i class="fa fa-circle" style="color:{c}"></i> {t}</p>'
+    legend_html += '</div>'
+    m.get_root().html.add_child(folium.Element(legend_html))
+
     return m
 
-def create_service_chart(df):
+
+def create_service_distribution(df):
     if df.empty:
         return None
     all_services = [s for services in df['Service_2_list'] for s in services if s]
     if not all_services:
         return None
     counts = pd.Series(all_services).value_counts()
-    fig = px.pie(values=counts.values, names=counts.index, title="Services Provided")
+    fig = px.pie(values=counts.values, names=counts.index, title="Services")
     fig.update_traces(textinfo='percent+label')
     fig.update_layout(paper_bgcolor='#1a242e', font_color="white")
     return fig
 
-def display_gallery(df):
+
+def display_project_gallery(df):
     if 'Image' not in df.columns:
         return
-    valid_images = df[df['Image'].apply(lambda x: is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME))]
-    if valid_images.empty:
-        st.write("🖼️ No images available in current view.")
+    projects = df[df['Image'].apply(lambda x: is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME))]
+    if projects.empty:
+        st.write("No images available in current view.")
         return
-    st.markdown('<div class="section-header">🖼️ Project Gallery</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">🖼️ Gallery</div>', unsafe_allow_html=True)
     cols = st.columns(4)
-    for i, (_, row) in enumerate(valid_images.head(8).iterrows()):
-        with cols[i % 4]:
-            st.image(row['Image'], caption=row['Project_Name'], use_container_width=True)
-            if pd.notna(row.get('Blog_Link')):
-                st.markdown(f"[📖 More info]({row['Blog_Link']})", unsafe_allow_html=True)
+    for i, (_, p) in enumerate(projects.head(8).iterrows()):
+        col = cols[i % 4]
+        with col:
+            st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
+            if pd.notna(p.get('Blog_Link')):
+                st.markdown(f"[📖 See More about this project]({p['Blog_Link']})", unsafe_allow_html=True)
 
-def navigation_sidebar():
+
+def create_navigation_sidebar():
     with st.sidebar:
         st.markdown("""
         <div class="logo-container">
             <a href="https://kronosgmt.com" target="_blank">
                 <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754540320/Logos_Kronos_PNG-04_nxdbz3.png" 
-                     style="width: 300px; border-radius: 10px;">
+                     style="width: 300px; height: auto; border-radius: 10px; cursor: pointer;">
             </a>
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("### Filters")
-        types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
-        selected_type = st.selectbox("🏢 Project Type", types, index=0, key="type_filter")
-        services = ["All"] + sorted({s for lst in df['Service_2_list'] for s in lst if s})
-        selected_service = st.selectbox("🛠️ Service", services, index=0, key="service_filter")
-        if st.button("Reset Filters"):
-            st.rerun()
+        st.markdown("""<style>.nav-button { text-decoration: none; }</style>""", unsafe_allow_html=True)
 
-        st.markdown("---")
-
-        with st.expander("🛠️ Services", expanded=False):
+        with st.expander("Services", expanded=False):
             st.markdown("""<a href="https://www.kronosgmt.com/3D-rendering" target="_blank" class="nav-button">3D Rendering</a>""", unsafe_allow_html=True)
             st.markdown("""<a href="https://www.kronosgmt.com/CAD-drafting" target="_blank" class="nav-button">CAD Drafting</a>""", unsafe_allow_html=True)
             st.markdown("""<a href="https://www.kronosgmt.com/takeoffs-schedules" target="_blank" class="nav-button">Takeoffs & Schedules</a>""", unsafe_allow_html=True)
             st.markdown("""<a href="https://www.kronosgmt.com/GIS-mapping" target="_blank" class="nav-button">GIS Mapping</a>""", unsafe_allow_html=True)
-            st.markdown("""<a href="https://www.kronosgmt.com/automation-workflow-optimization" target="_blank" class="nav-button">Automation & Workflow</a>""", unsafe_allow_html=True)
+            st.markdown("""<a href="https://www.kronosgmt.com/automation-workflow-optimization" target="_blank" class="nav-button">Automation & Workflow Optimization</a>""", unsafe_allow_html=True)
 
-        st.markdown("""<a href="https://news.kronosgmt.com/" target="_blank" class="nav-button">📰 News</a>""", unsafe_allow_html=True)
-        st.markdown("""<a href="https://www.kronosgmt.com/#contact" target="_blank" class="nav-button">📧 Contact Us</a>""", unsafe_allow_html=True)
+        st.markdown("""<a href="https://news.kronosgmt.com/" target="_blank" class="nav-button">News</a>""", unsafe_allow_html=True)
+        st.markdown("""<a href="https://www.kronosgmt.com/#contact" target="_blank" class="nav-button">Contact Us</a>""", unsafe_allow_html=True)
         st.markdown("---")
 
-# --- MAIN APP ---
+
 def main():
-    st.markdown('<h1 class="main-header"> Kronos GMT - Project Dashboard </h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header"> Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
 
     df = load_data()
     if df is None or df.empty:
-        st.error("❌ No data available.")
         st.stop()
 
-    # Sidebar con filtros
-    navigation_sidebar()
+    service_options = create_service_mapping(df)
 
-    # Filtros seleccionados
-    selected_type = st.session_state.get("type_filter", "All")
-    selected_service = st.session_state.get("service_filter", "All")
+    # Sidebar filters
+    with st.sidebar:
+        st.markdown("### Filters")
+        types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
+        selected_type = st.selectbox("🏢 Type", types, index=0)
+        services = ["All"] + service_options if service_options else ["All"]
+        selected_service = st.selectbox("🌎 Service", services, index=0)
+        st.button("Reset Filters", on_click=lambda: st.rerun())
+        st.markdown("---")
 
+    # Apply non-spatial filters first
     filtered_df = filter_data(df, selected_type, selected_service)
+
     if filtered_df.empty:
-        st.error("❌ No projects match the selected filters.")
+        st.error("No projects match the selected filters.")
         st.stop()
 
-    # Layout principal
+    create_navigation_sidebar()
+
+    # Layout
     col1, col2 = st.columns([2, 1])
 
     with col1:
         st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
-
-        # Validar datos para el mapa
-        map_df = filtered_df.dropna(subset=['Latitude', 'Longitude'])
-        map_df = map_df[(map_df['Latitude'].between(-90, 90)) & (map_df['Longitude'].between(-180, 180))]
-        if map_df.empty:
-            st.warning("No valid coordinates to display.")
-            st.stop()
-
-        # Crear y mostrar mapa
-        map_obj = create_map(map_df)
+        map_obj = create_interactive_map(filtered_df)
         if map_obj:
-            map_data = st_folium(
-                map_obj,
-                key="main_map",
-                height=500,
-                use_container_width=True,
-                returned_objects=["bounds"],
-                sticky=True
-            )
+            # Capture map bounds after interaction
+            map_data = st_folium(map_obj, use_container_width=True, height=500, returned_objects=["bounds"])
         else:
-            st.warning("Unable to generate map.")
-            st.stop()
+            map_data = {}
 
     with col2:
-        st.markdown('<div class="section-header">📊 Services</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
 
-    # Filtrar por área visible en el mapa
-    displayed_df = map_df.copy()
-    if map_data and isinstance(map_data, dict) and map_data.get("bounds"):
-        bounds = map_data["bounds"]
-        sw, ne = bounds["southWest"], bounds["northEast"]
-        lat_min, lat_max = sw["lat"], ne["lat"]
-        lon_min, lon_max = sw["lng"], ne["lng"]
-        displayed_df = map_df[
-            (map_df['Latitude'] >= lat_min) &
-            (map_df['Latitude'] <= lat_max) &
-            (map_df['Longitude'] >= lon_min) &
-            (map_df['Longitude'] <= lon_max)
-        ]
-        st.write(f"📍 **{len(displayed_df)} projects in current view**")
-    else:
-        st.write("🔍 Pan or zoom the map to filter")
+    # --- 🔍 SPATIAL FILTERING: Only projects visible in current map view ---
+    displayed_df = filtered_df.copy()
 
-    # Actualizar gráfico
+    if 'bounds' in map_data and map_data['bounds']:
+        try:
+            bounds = map_data['bounds']
+            sw = bounds['southWest']
+            ne = bounds['northEast']
+            displayed_df = displayed_df[
+                (displayed_df['Latitude'] >= sw['lat']) &
+                (displayed_df['Latitude'] <= ne['lat']) &
+                (displayed_df['Longitude'] >= sw['lng']) &
+                (displayed_df['Longitude'] <= ne['lng'])
+            ]
+        except Exception as e:
+            st.warning("🗺️ Could not filter by map bounds: " + str(e))
+
+    # Show how many projects are visible
+    st.write(f"🔍 **{len(displayed_df)} projects visible in current map view**")
+
+    # Update chart with spatially filtered data
     with col2:
-        chart = create_service_chart(displayed_df)
+        chart = create_service_distribution(displayed_df)
         if chart:
             st.plotly_chart(chart, use_container_width=True)
         else:
-            st.write("No service data.")
+            st.write("No service data available in current view.")
 
-    # Actualizar galería
-    display_gallery(displayed_df)
+    # Update gallery with spatially filtered data
+    display_project_gallery(displayed_df)
 
     st.markdown("---")
     st.caption("© 2025 Kronos GMT | Created by Juan Cano")
+
 
 if __name__ == "__main__":
     main()
