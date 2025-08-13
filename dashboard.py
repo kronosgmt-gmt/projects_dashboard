@@ -27,19 +27,21 @@ def is_valid_cloudinary_url(url, cloud_name=None):
         return False
     parsed = urlparse(url)
     if cloud_name:
-        return (parsed.netloc == "res.cloudinary.com" and url.startswith(f"https://res.cloudinary.com/{cloud_name}/"))
+        return parsed.netloc == "res.cloudinary.com" and url.startswith(f"https://res.cloudinary.com/{cloud_name}/")
     return parsed.netloc == "res.cloudinary.com"
 
 @st.cache_data
 def load_data():
-    url = "https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"
+    url = "https://raw.githubusercontent.com/kronosgmt-gmt/projects_dashboard/main/proyects.csv"
     try:
-        if "github.com" in url:
-            url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         content = io.StringIO(response.text)
         df = pd.read_csv(content, encoding='utf-8')
+
+        if df.empty:
+            st.error("Loaded data is empty")
+            return None
 
         df.columns = df.columns.str.strip()
         df['Longitude'] = pd.to_numeric(df['Longitude'], errors='coerce')
@@ -68,7 +70,7 @@ def load_data():
 
         if 'Image' in df.columns and CLOUDINARY_CLOUD_NAME:
             df['Image'] = df['Image'].apply(
-                lambda x: f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto/{x.strip()}"
+                lambda x: f"https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/f_auto,q_auto,w_300/{x.strip()}"
                 if pd.notna(x) and isinstance(x, str) and x.strip() and not is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME)
                 else x
             )
@@ -78,6 +80,7 @@ def load_data():
         st.error(f"Failed to load data: {str(e)}")
         return None
 
+@st.cache_data
 def create_service_mapping(df):
     all_services = set()
     for services in df['Service_2_list']:
@@ -85,6 +88,7 @@ def create_service_mapping(df):
             all_services.update(services)
     return sorted([s for s in all_services if s])
 
+@st.cache_data
 def filter_data(df, project_type_filter, service_filter):
     filtered_df = df.copy()
     if project_type_filter != "All":
@@ -96,19 +100,26 @@ def filter_data(df, project_type_filter, service_filter):
 @st.cache_data
 def create_interactive_map(df):
     if df.empty:
+        st.warning("No data available for map")
         return None
     unique_types = df['Customer_Type'].dropna().unique()
     color_map = get_project_type_colors(unique_types)
     center_lat = df['Latitude'].mean()
     center_lon = df['Longitude'].mean()
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=8, zoom_control=True, tiles="OpenStreetMap")
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=8,
+        zoom_control=True,
+        tiles="CartoDB Positron",
+        attr="CartoDB"
+    )
     for _, row in df.iterrows():
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
         color = color_map.get(row['Customer_Type'], '#888888')
         folium.CircleMarker(
             location=[row['Latitude'], row['Longitude']],
             radius=8,
-            popup=popup,
+            popup=folium.Popup(popup, max_width=300),
             tooltip=row['Project_Name'],
             fillColor=color,
             fillOpacity=0.7,
@@ -117,6 +128,7 @@ def create_interactive_map(df):
         ).add_to(m)
     return m
 
+@st.cache_data
 def create_service_distribution(df):
     if df.empty:
         return None
@@ -134,6 +146,7 @@ def display_project_gallery(df):
         return
     projects = df[df['Image'].apply(lambda x: is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME))]
     if projects.empty:
+        st.warning("No valid images available for gallery")
         return
     st.markdown('### 🖼️ Gallery')
     cols = st.columns(4)
@@ -164,6 +177,7 @@ def main():
         selected_type = st.selectbox("🏢 Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
+        use_bounds_filter = st.checkbox("Filter by map bounds", value=False)
         st.button("Reset Filters", on_click=lambda: st.rerun())
 
     filtered_df = filter_data(df, selected_type, selected_service)
@@ -171,27 +185,26 @@ def main():
     col1, col2 = st.columns([2, 1])
     with col1:
         st.subheader("📍 Project Location")
-        map_obj = create_interactive_map(filtered_df)
-        if map_obj:
-            with st.spinner("Loading map..."):
-                map_state = st_folium(map_obj, use_container_width=True, height=600, return_state="all")
+        with st.spinner("Loading map..."):
+            map_obj = create_interactive_map(filtered_df)
+            if map_obj:
+                map_state = st_folium(map_obj, use_container_width=True, height=600, key="map", return_state="all")
 
-            # Debug bounds
-            if map_state and "bounds" in map_state:
-                st.write("Map Bounds:", map_state["bounds"])
+                # Debug map state
+                if map_state:
+                    st.write("Map State (Debug):", map_state)
 
-            # Si hay límites visibles, filtrar
-            if map_state and "bounds" in map_state:
-                bounds = map_state["bounds"]
-                min_lat = bounds["_southWest"]["lat"]
-                max_lat = bounds["_northEast"]["lat"]
-                min_lon = bounds["_southWest"]["lng"]
-                max_lon = bounds["_northEast"]["lng"]
-
-                filtered_df = filtered_df[
-                    (filtered_df["Latitude"] >= min_lat) & (filtered_df["Latitude"] <= max_lat) &
-                    (filtered_df["Longitude"] >= min_lon) & (filtered_df["Longitude"] <= max_lon)
-                ]
+                # Apply bounds filtering only if enabled
+                if use_bounds_filter and map_state and "bounds" in map_state:
+                    bounds = map_state["bounds"]
+                    min_lat = bounds["_southWest"]["lat"]
+                    max_lat = bounds["_northEast"]["lat"]
+                    min_lon = bounds["_southWest"]["lng"]
+                    max_lon = bounds["_northEast"]["lng"]
+                    filtered_df = filtered_df[
+                        (filtered_df["Latitude"] >= min_lat) & (filtered_df["Latitude"] <= max_lat) &
+                        (filtered_df["Longitude"] >= min_lon) & (filtered_df["Longitude"] <= max_lon)
+                    ]
 
     with col2:
         st.subheader("📊 Services Provided")
