@@ -204,7 +204,14 @@ def create_interactive_map(df):
     center_lat = df['Latitude'].mean()
     center_lon = df['Longitude'].mean()
 
-    m = folium.Map(location=[center_lat, center_lon], zoom_start=6)
+    m = folium.Map(
+        location=[center_lat, center_lon],
+        zoom_start=6,
+        tiles="OpenStreetMap",
+        attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    )
+
+    marker_cluster = MarkerCluster().add_to(m)
 
     for _, row in df.iterrows():
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
@@ -219,12 +226,16 @@ def create_interactive_map(df):
             fillOpacity=0.7,
             color='white',
             weight=1
-        ).add_to(m)
+        ).add_to(marker_cluster)
 
-    legend_html = '<div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: #1a252f; border: 2px solid grey; z-index: 9999; padding: 10px; border-radius: 5px;">'
-    legend_html += '<p><b>Legend</b></p>'
+    # Add legend
+    legend_html = '''
+    <div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: #1a252f; 
+                border: 2px solid #07b9d1; z-index: 9999; padding: 10px; border-radius: 5px; font-size: 14px;">
+        <p style="color: white; margin: 0 0 5px 0;"><b>Legend</b></p>
+    '''
     for t, c in color_map.items():
-        legend_html += f'<p><i class="fa fa-circle" style="color:{c}"></i> {t}</p>'
+        legend_html += f'<p style="margin: 3px 0; color: white;"><i class="fa fa-circle" style="color:{c}; margin-right: 8px;"></i> {t}</p>'
     legend_html += '</div>'
     m.get_root().html.add_child(folium.Element(legend_html))
 
@@ -240,7 +251,12 @@ def create_service_distribution(df):
     counts = pd.Series(all_services).value_counts()
     fig = px.pie(values=counts.values, names=counts.index, title="Services")
     fig.update_traces(textinfo='percent+label')
-    fig.update_layout(paper_bgcolor='#1a242e', font_color="white")
+    fig.update_layout(
+        paper_bgcolor='#1a242e',
+        plot_bgcolor='#1a242e',
+        font_color="white",
+        title_font_size=16
+    )
     return fig
 
 
@@ -272,8 +288,6 @@ def create_navigation_sidebar():
         </div>
         """, unsafe_allow_html=True)
 
-        st.markdown("""<style>.nav-button { text-decoration: none; }</style>""", unsafe_allow_html=True)
-
         with st.expander("Services", expanded=False):
             st.markdown("""<a href="https://www.kronosgmt.com/3D-rendering" target="_blank" class="nav-button">3D Rendering</a>""", unsafe_allow_html=True)
             st.markdown("""<a href="https://www.kronosgmt.com/CAD-drafting" target="_blank" class="nav-button">CAD Drafting</a>""", unsafe_allow_html=True)
@@ -291,6 +305,7 @@ def main():
 
     df = load_data()
     if df is None or df.empty:
+        st.error("❌ No data loaded. Check your data source.")
         st.stop()
 
     service_options = create_service_mapping(df)
@@ -302,7 +317,8 @@ def main():
         selected_type = st.selectbox("🏢 Type", types, index=0)
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🌎 Service", services, index=0)
-        st.button("Reset Filters", on_click=lambda: st.rerun())
+        if st.button("Reset Filters"):
+            st.rerun()
         st.markdown("---")
 
     # Apply non-spatial filters first
@@ -320,10 +336,11 @@ def main():
     with col1:
         st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
         map_obj = create_interactive_map(filtered_df)
-        if map_obj:
-            # Capture map bounds after interaction
+        if map_obj is not None:
+            # Use st_folium to render and get bounds
             map_data = st_folium(map_obj, use_container_width=True, height=500, returned_objects=["bounds"])
         else:
+            st.warning("Map could not be generated.")
             map_data = {}
 
     with col2:
@@ -332,7 +349,7 @@ def main():
     # --- 🔍 SPATIAL FILTERING: Only projects visible in current map view ---
     displayed_df = filtered_df.copy()
 
-    if 'bounds' in map_data and map_data['bounds']:
+    if map_data and 'bounds' in map_data and map_data['bounds']:
         try:
             bounds = map_data['bounds']
             sw = bounds['southWest']
