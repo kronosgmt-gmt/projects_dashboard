@@ -188,69 +188,49 @@ def main():
         st.session_state.map_zoom = 8
 
     col1, col2 = st.columns([2, 1])
-
-    # --- MAPA CON ESTADO PERSISTENTE ---
     with col1:
-        st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
+        st.subheader("📍 Project Location")
+        with st.spinner("Loading map..."):
+            map_obj = create_interactive_map(filtered_df, st.session_state.map_center, st.session_state.map_zoom)
+            if map_obj:
+                map_state = st_folium(
+                    map_obj,
+                    center=st.session_state.map_center,
+                    zoom=st.session_state.map_zoom,
+                    use_container_width=True,
+                    height=600,
+                    key="map",
+                    returned_objects=["center", "zoom", "bounds"]
+                )
 
-        # Solo recrear el mapa si los filtros cambian, no en cada interacción del mapa
-        map_key = f"map_{selected_type}_{selected_service}"
-        if map_key not in st.session_state:
-            st.session_state[map_key] = create_interactive_map(filtered_df)
+                # Update session state with new map state
+                if map_state and "center" in map_state and "zoom" in map_state:
+                    st.session_state.map_center = map_state["center"]
+                    st.session_state.map_zoom = map_state["zoom"]
 
-        map_obj = st.session_state[map_key]
+                # Debug map state
+                if map_state:
+                    st.write("Map State (Debug):", map_state)
 
-        if map_obj:
-            map_data = st_folium(
-                map_obj,
-                key=f"folium_{map_key}",
-                use_container_width=True,
-                height=500,
-                returned_objects=["bounds"],
-                # Wait for interaction
-                sticky=True,  # Mantiene el zoom/posición
-            )
-        else:
-            map_data = {}
+                # Apply bounds filtering only if enabled
+                if use_bounds_filter and map_state and "bounds" in map_state:
+                    bounds = map_state["bounds"]
+                    min_lat = bounds["_southWest"]["lat"]
+                    max_lat = bounds["_northEast"]["lat"]
+                    min_lon = bounds["_southWest"]["lng"]
+                    max_lon = bounds["_northEast"]["lng"]
+                    filtered_df = filtered_df[
+                        (filtered_df["Latitude"] >= min_lat) & (filtered_df["Latitude"] <= max_lat) &
+                        (filtered_df["Longitude"] >= min_lon) & (filtered_df["Longitude"] <= max_lon)
+                    ]
 
     with col2:
-        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
-
-    # --- FILTRO ESPACIAL: Usar bounds del mapa ---
-    displayed_df = filtered_df.copy()
-
-    # Mostrar bounds para depuración (opcional, luego puedes quitarlo)
-    # st.write("Debug - Map Data:", map_data)
-
-    if map_data and 'bounds' in map_data and map_data['bounds']:
-        try:
-            bounds = map_data['bounds']
-            sw = bounds['southWest']
-            ne = bounds['northEast']
-
-            displayed_df = filtered_df[
-                (filtered_df['Latitude'] >= sw['lat']) &
-                (filtered_df['Latitude'] <= ne['lat']) &
-                (filtered_df['Longitude'] >= sw['lng']) &
-                (filtered_df['Longitude'] <= ne['lng'])
-            ]
-
-            st.write(f"✅ **{len(displayed_df)} projects within current map view**")
-        except Exception as e:
-            st.warning(f"❌ Error in spatial filter: {e}")
-    else:
-        st.write("🔍 **Pan or zoom the map to filter projects by area**")
-
-    # Actualizar gráfico
-    with col2:
-        chart = create_service_distribution(displayed_df)
-        if chart is not None:
+        st.subheader("📊 Services Provided")
+        chart = create_service_distribution(filtered_df)
+        if chart:
             st.plotly_chart(chart, use_container_width=True)
-        else:
-            st.write("No service data in current view.")
 
-    # Actualizar galería
-    display_project_gallery(displayed_df)
+    display_project_gallery(filtered_df)
 
     st.caption("© 2025 Kronos GMT")
 
