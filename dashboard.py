@@ -314,36 +314,65 @@ def main():
 
     create_navigation_sidebar()
 
-    # Layout
-    col1, col2 = st.columns([2, 1])
+# Layout
+col1, col2 = st.columns([2, 1])
 
-    with col1:
-        st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
+with col1:
+    st.markdown('<div class="section-header">📍 Project Location</div>', unsafe_allow_html=True)
 
-        # Persistir el mapa para no recrearlo en cada rerun
-        map_key = "folium_map"
-        if map_key not in st.session_state:
-            st.session_state[map_key] = create_interactive_map(filtered_df)
+    # Validate data
+    if filtered_df.empty:
+        st.warning("No projects available for mapping.")
+        return
 
-        map_obj = st.session_state[map_key]
+    map_df = filtered_df.dropna(subset=['Latitude', 'Longitude']).copy()
+    map_df = map_df[
+        (map_df['Latitude'].between(-90, 90)) &
+        (map_df['Longitude'].between(-180, 180))
+    ]
+    if map_df.empty:
+        st.warning("No valid coordinates to display on map.")
+        return
 
-        # Obtener datos del mapa, incluyendo bounds
-        try:
-            map_data = st_folium(
-                map_obj,
-                key="map_interaction",
-                use_container_width=True,
-                height=500,
-                returned_objects=["bounds"],
-                sticky=True,  # Mantiene el zoom/posición
-            )
-        except Exception as e:
-            st.error("Error loading map. Please refresh.")
-            st.stop()
-            return
+    try:
+        center_lat = map_df['Latitude'].mean()
+        center_lon = map_df['Longitude'].mean()
 
-    with col2:
-        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
+        m = folium.Map(
+            location=[center_lat, center_lon],
+            zoom_start=6,
+            tiles="OpenStreetMap",
+            control_scale=True
+        )
+
+        for _, row in map_df.iterrows():
+            popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
+            color = "#07b9d1"
+            folium.CircleMarker(
+                location=[row['Latitude'], row['Longitude']],
+                radius=8,
+                popup=popup,
+                tooltip=row['Project_Name'],
+                fillColor=color,
+                fillOpacity=0.7,
+                color='white',
+                weight=1
+            ).add_to(m)
+
+        map_data = st_folium(
+            m,
+            key="interactive_map",
+            use_container_width=True,
+            height=500,
+            returned_objects=["bounds"],
+            sticky=True,
+        )
+    except Exception as e:
+        st.error(f"❌ Failed to generate map: {str(e)}")
+        st.stop()
+
+with col2:
+    st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
 
     # --- 🔍 FILTRO ESPACIAL: Usar bounds solo si están disponibles ---
     displayed_df = filtered_df.copy()  # Por defecto, todos los filtrados
