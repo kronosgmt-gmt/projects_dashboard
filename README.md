@@ -1,2 +1,3 @@
 # projects_dashboard
-interactive dashboard for our website portfolio v2
+interactive dashboard for our website portfolio https://projects-dashboard.streamlit.app/
+We help engineering, architecture, and construction firms improve the quality, speed, and consistency of their deliverables through **CAD drafting**, **3D renders**, **construction takeoffs and schedules**, **GIS** solutions, and **automation with Python**. We optimize your workflow with precision and efficiency. Our core mission is to simplify and elevate the way technical drawings and project documentation are developed and delivered. We specialize in high-quality CAD drafting, 3D rendering, construction takeoff and scheduling, GIS, and workflow automation using Python. We’ve collaborated with firms in Florida, helping them reduce design bottlenecks, scale production during high-demand phases, and deliver outstanding results that meet & exceed expectations.
