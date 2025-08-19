@@ -11,6 +11,20 @@ import os
 import requests
 import io
 import streamlit.components.v1 as components
+import streamlit as st
+
+# Smartlook tracking
+st.html("""
+<script type='text/javascript'>
+  window.smartlook||(function(d) {
+    var o=smartlook=function(){ o.api.push(arguments)},h=d.getElementsByTagName('head')[0];
+    var c=d.createElement('script');o.api=new Array();c.async=true;c.type='text/javascript';
+    c.charset='utf-8';c.src='https://web-sdk.smartlook.com/recorder.js';h.appendChild(c);
+    })(document);
+    smartlook('init', 'db9d0d226629d4d7abbb32771e2f9195e8a1dba9', { region: 'eu' });
+</script>
+""")
+
 
 # Cloudinary configuration
 CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
