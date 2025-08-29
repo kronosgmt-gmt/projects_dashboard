@@ -1,7 +1,7 @@
 name: Keep Streamlit App Alive
 on:
   schedule:
-    - cron: '0 */10 * * *'  # Runs every 10 hours
+    - cron: '0 */1 * * *'  # Runs every 1 hours
   workflow_dispatch:  # Allows manual triggering
 jobs:
   ping:
