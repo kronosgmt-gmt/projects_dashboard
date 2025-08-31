@@ -1,11 +1,17 @@
-name: Keep Streamlit App Alive
+name: Keep Streamlit App Awake
+
 on:
+  workflow_dispatch: {}
   schedule:
-    - cron: '0 */1 * * *'  # Runs every 1 hours
-  workflow_dispatch:  # Allows manual triggering
+    - cron: '*/10 * * * *'  # Cada 10 minutos
+
 jobs:
-  ping:
+  wake-up:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Streamlit App
-        run: curl https://projects-dashboard.streamlit.app/
+        run: |
+          curl -fsSL -o /dev/null ${{ secrets.STREAMLIT_APP_URL }}
+          echo "App pinged successfully"
+        env:
+          STREAMLIT_APP_URL: ${{ secrets.STREAMLIT_APP_URL }}
