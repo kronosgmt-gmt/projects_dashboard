@@ -319,7 +319,7 @@ def display_project_gallery(df):
         # Miniatura
         col.image(img_url, use_container_width=True, caption=project_name)
 
-        # Expander que simula el modal
+        # Botón tipo expander (sin repetir miniatura)
         with col.expander("🔍 View Full Screen"):
             st.markdown(f"### {project_name}")
             st.image(img_url, use_container_width=True)
