@@ -16,13 +16,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# =========================
-# GLOBAL VARIABLES
-# =========================
 CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
 
 # =========================
-# CUSTOM FUTURISTIC CSS
+# CUSTOM CSS (CORPORATE FUTURISTIC)
 # =========================
 st.markdown("""
 <style>
@@ -66,7 +63,7 @@ body, .stApp {
     box-shadow: 0 0 15px rgba(0,234,255,0.3);
 }
 
-.filter-section, .stSidebar {
+.stSidebar {
     background: rgba(20, 30, 40, 0.6);
     backdrop-filter: blur(6px);
     border-right: 2px solid rgba(0,234,255,0.2);
@@ -95,7 +92,6 @@ body, .stApp {
 # =========================
 # FUNCTIONS
 # =========================
-
 def is_valid_cloudinary_url(url, cloud_name=None):
     if not url or pd.isna(url) or not isinstance(url, str):
         return False
@@ -201,12 +197,28 @@ def display_project_gallery(df):
     for i, (_, p) in enumerate(df.head(8).iterrows()):
         col = cols[i % 4]
         with col:
-            st.markdown(f"""
-            <div style='position:relative; border-radius:10px; overflow:hidden; margin-bottom:10px;'>
-              <img src='{p['Image']}' style='width:100%; border-radius:10px; transition:transform 0.3s ease;'>
-              <div style='position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:white; padding:5px; text-align:center; font-size:0.9rem;'>{p['Project_Name']}</div>
-            </div>
-            """, unsafe_allow_html=True)
+            blog_link = p.get('Blog_Link', None)
+            if pd.notna(blog_link):
+                st.markdown(f"""
+                <div style='position:relative; border-radius:10px; overflow:hidden; margin-bottom:10px;'>
+                  <a href='{blog_link}' target='_blank'>
+                    <img src='{p['Image']}' style='width:100%; border-radius:10px; transition:transform 0.3s ease;'>
+                    <div style='position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); 
+                                color:white; padding:5px; text-align:center; font-size:0.9rem;'>
+                        {p['Project_Name']}<br><span style="color:#00eaff;">📖 Learn More</span>
+                    </div>
+                  </a>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div style='position:relative; border-radius:10px; overflow:hidden; margin-bottom:10px;'>
+                  <img src='{p['Image']}' style='width:100%; border-radius:10px; transition:transform 0.3s ease;'>
+                  <div style='position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:white; padding:5px; text-align:center; font-size:0.9rem;'>
+                    {p['Project_Name']}
+                  </div>
+                </div>
+                """, unsafe_allow_html=True)
 
 # =========================
 # MAIN APP
@@ -232,7 +244,9 @@ def main():
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🧩 Service", services, index=0)
 
-        project_names = ["All"] + sorted(df['Project_Name'].dropna().unique().tolist())
+        # Filter project names dynamically based on previous selections
+        temp_filtered = filter_data(df, selected_type, selected_service, "All")
+        project_names = ["All"] + sorted(temp_filtered['Project_Name'].dropna().unique().tolist())
         selected_project = st.selectbox("📁 Project Name", project_names, index=0)
 
     filtered_df = filter_data(df, selected_type, selected_service, selected_project)
