@@ -314,21 +314,22 @@ def display_project_gallery(df):
         img_url = row['Image']
         project_name = row.get('Project_Name', f"Project {i+1}")
         blog_link = row.get('Blog_Link', None)
+        project_type = row.get('Customer_Type', 'Unknown')
 
         # Miniatura
         col.image(img_url, use_container_width=True, caption=project_name)
 
-        # Botón para abrir modal
-        if col.button("🔍 View", key=f"view_{i}", use_container_width=True):
-            with st.modal(project_name):
-                st.image(img_url, use_container_width=True)
-                st.markdown(f"### {project_name}")
+        # Expander que simula el modal
+        with col.expander("🔍 View Full Screen"):
+            st.markdown(f"### {project_name}")
+            st.image(img_url, use_container_width=True)
+            st.markdown(f"**Project Type:** {project_type}")
 
-                if pd.notna(blog_link):
-                    st.markdown(
-                        f"[📖 Learn More]({blog_link})",
-                        unsafe_allow_html=True
-                    )
+            if pd.notna(blog_link):
+                st.markdown(
+                    f"[📖 Learn More →]({blog_link})",
+                    unsafe_allow_html=True
+                )
 
 # =========================
 # MAIN APP
