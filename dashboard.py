@@ -298,34 +298,37 @@ def _valid_url(u: str) -> bool:
 
 def display_project_gallery(df):
     st.markdown('<div class="section-header">🖼️ Project Gallery</div>', unsafe_allow_html=True)
+
     if 'Image' not in df.columns:
         st.write("No images available.")
         return
 
-    safe_df = df[df['Image'].apply(_valid_url)].copy()
-    if safe_df.empty:
+    valid_df = df[df['Image'].notna() & df['Image'].astype(str).str.startswith('http')]
+    if valid_df.empty:
         st.write("No images available.")
         return
 
     cols = st.columns(4)
-    max_cards = min(12, len(safe_df))
-    for i, (_, row) in enumerate(safe_df.head(max_cards).iterrows()):
+    for i, (_, row) in enumerate(valid_df.head(12).iterrows()):
         col = cols[i % 4]
-        name = row.get('Project_Name', f'Project {i+1}')
-        img  = row.get('Image', '')
-        blog = row.get('Blog_Link', None)
+        img_url = row['Image']
+        project_name = row.get('Project_Name', f"Project {i+1}")
+        blog_link = row.get('Blog_Link', None)
 
-        html = f"""
-        <div class="kg-card" onclick="kgOpenLightbox('{img}')">
-          <img src="{img}" alt="{name}">
-          <div class="kg-caption">
-            {name}
-            {f'<br><a href="{blog}" target="_blank">📖 Learn More</a>' if isinstance(blog, str) and blog.strip() else ''}
-          </div>
-        </div>
-        """
-        with col:
-            st.markdown(html, unsafe_allow_html=True)
+        # Miniatura
+        col.image(img_url, use_container_width=True, caption=project_name)
+
+        # Botón para abrir modal
+        if col.button("🔍 View", key=f"view_{i}", use_container_width=True):
+            with st.modal(project_name):
+                st.image(img_url, use_container_width=True)
+                st.markdown(f"### {project_name}")
+
+                if pd.notna(blog_link):
+                    st.markdown(
+                        f"[📖 Learn More]({blog_link})",
+                        unsafe_allow_html=True
+                    )
 
 # =========================
 # MAIN APP
