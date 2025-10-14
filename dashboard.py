@@ -19,7 +19,7 @@ st.set_page_config(
 CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
 
 # =========================
-# CUSTOM CSS + LIGHTBOX JS
+# CUSTOM CSS
 # =========================
 st.markdown("""
 <style>
@@ -87,53 +87,16 @@ body, .stApp {
     transform: translateY(-2px);
 }
 
-/* --- LIGHTBOX IMAGE STYLES --- */
-.lightbox {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  padding-top: 80px;
-  left: 0; top: 0;
-  width: 100%; height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.9);
+.image-thumb {
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
 }
-.lightbox-content {
-  margin: auto;
-  display: block;
-  max-width: 80%;
-  border-radius: 10px;
-  box-shadow: 0 0 20px rgba(0,234,255,0.5);
-}
-.lightbox-close {
-  position: absolute;
-  top: 40px; right: 60px;
-  color: #00eaff;
-  font-size: 40px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-}
-.lightbox-close:hover {
-  color: white;
-  transform: scale(1.1);
+.image-thumb:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 10px rgba(0,234,255,0.3);
 }
 </style>
-
-<script>
-function openLightbox(src) {
-  document.getElementById("lightbox").style.display = "block";
-  document.getElementById("lightbox-img").src = src;
-}
-function closeLightbox() {
-  document.getElementById("lightbox").style.display = "none";
-}
-</script>
-
-<div id="lightbox" class="lightbox" onclick="closeLightbox()">
-  <span class="lightbox-close" onclick="closeLightbox()">×</span>
-  <img id="lightbox-img" class="lightbox-content">
-</div>
 """, unsafe_allow_html=True)
 
 # =========================
@@ -208,7 +171,7 @@ def filter_data(df, project_type_filter, service_filter, project_name_filter):
     return filtered_df
 
 def get_project_type_colors(types):
-    fixed_colors = {'Commercial': '#00eaff', 'Residential': '#00ffa2', 'Unknown': '#888888'}
+    fixed_colors = {'Commercial': '#FF8C42', 'Residential': '#00FFD1', 'Unknown': '#AAAAAA'}
     color_map = {}
     extra_colors = ['#ff6f61', '#9b59b6', '#f1c40f']
     for i, t in enumerate(types):
@@ -220,6 +183,7 @@ def create_map(df):
         return None
     color_map = get_project_type_colors(df['Customer_Type'].unique())
     m = folium.Map(location=[df['Latitude'].mean(), df['Longitude'].mean()], zoom_start=6, tiles="CartoDB dark_matter")
+
     for _, row in df.iterrows():
         color = color_map.get(row['Customer_Type'], '#00eaff')
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
@@ -233,6 +197,18 @@ def create_map(df):
             fillOpacity=0.9,
             weight=2
         ).add_to(m)
+
+    # Add legend
+    legend_html = '''
+    <div style="position: fixed; bottom: 50px; left: 50px; width: 200px; background: rgba(10,15,20,0.8);
+                border: 2px solid #00eaff; border-radius: 8px; padding: 10px; color: white; font-size: 13px;">
+        <b>Project Types</b><br>
+        <i style="background:#00FFD1;width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;"></i> Residential<br>
+        <i style="background:#FF8C42;width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;"></i> Commercial<br>
+        <i style="background:#AAAAAA;width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;"></i> Unknown
+    </div>
+    '''
+    m.get_root().html.add_child(folium.Element(legend_html))
     return m
 
 def display_project_gallery(df):
@@ -240,23 +216,19 @@ def display_project_gallery(df):
     if 'Image' not in df.columns or df['Image'].dropna().empty:
         st.write("No images available.")
         return
+
     cols = st.columns(4)
     for i, (_, p) in enumerate(df.head(8).iterrows()):
         col = cols[i % 4]
         with col:
             blog_link = p.get('Blog_Link', None)
-            image_html = f"""
-            <div style='position:relative; border-radius:10px; overflow:hidden; margin-bottom:10px;'>
-              <img src='{p['Image']}' onclick="openLightbox('{p['Image']}')" 
-                   style='width:100%; border-radius:10px; cursor:pointer; transition:transform 0.3s ease;'>
-              <div style='position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); 
-                          color:white; padding:5px; text-align:center; font-size:0.9rem;'>
-                  {p['Project_Name']}
-                  {"<br><a href='" + blog_link + "' target='_blank' style='color:#00eaff; text-decoration:none;'>📖 Learn More</a>" if pd.notna(blog_link) else ""}
-              </div>
-            </div>
-            """
-            st.markdown(image_html, unsafe_allow_html=True)
+            img = p['Image']
+            if st.button(p['Project_Name'], key=f"btn_{i}", use_container_width=True):
+                with st.modal(p['Project_Name']):
+                    st.image(img, use_container_width=True, caption=p['Project_Name'])
+                    if pd.notna(blog_link):
+                        st.markdown(f"[📖 Learn More]({blog_link})", unsafe_allow_html=True)
+            st.image(img, use_container_width=True, caption=p['Project_Name'], output_format="auto")
 
 # =========================
 # MAIN APP
@@ -282,7 +254,6 @@ def main():
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🧩 Service", services, index=0)
 
-        # Dynamic project names
         temp_filtered = filter_data(df, selected_type, selected_service, "All")
         project_names = ["All"] + sorted(temp_filtered['Project_Name'].dropna().unique().tolist())
         selected_project = st.selectbox("📁 Project Name", project_names, index=0)
@@ -311,9 +282,9 @@ def main():
         unique_services = len(set([s for sublist in filtered_df['Service_2_list'] for s in sublist]))
 
         st.markdown(f"""
-        <div class="metric-card"><h3 style="color:#00eaff;">{total_projects}</h3><p>Active Projects</p></div>
-        <div class="metric-card"><h3 style="color:#00ffa2;">{unique_services}</h3><p>Unique Services</p></div>
-        <div class="metric-card"><h3 style="color:#f1c40f;">{total_services}</h3><p>Total Services Provided</p></div>
+        <div class="metric-card"><h3 style="color:#00FFD1;">{total_projects}</h3><p>Active Projects</p></div>
+        <div class="metric-card"><h3 style="color:#FF8C42;">{unique_services}</h3><p>Unique Services</p></div>
+        <div class="metric-card"><h3 style="color:#AAAAAA;">{total_services}</h3><p>Total Services Provided</p></div>
         """, unsafe_allow_html=True)
 
     display_project_gallery(filtered_df)
