@@ -314,22 +314,19 @@ def display_project_gallery(df):
         img_url = row['Image']
         project_name = row.get('Project_Name', f"Project {i+1}")
         blog_link = row.get('Blog_Link', None)
-        project_type = row.get('Customer_Type', 'Unknown')
 
-        # Miniatura
+        # Miniatura principal
         col.image(img_url, use_container_width=True, caption=project_name)
 
-        # Botón tipo expander (sin repetir miniatura)
-        with col.expander("🔍 View Full Screen"):
-            st.markdown(f"### {project_name}")
-            st.image(img_url, use_container_width=True)
-            st.markdown(f"**Project Type:** {project_type}")
-
-            if pd.notna(blog_link):
-                st.markdown(
-                    f"[📖 Learn More →]({blog_link})",
-                    unsafe_allow_html=True
-                )
+        # Mostrar botón solo si hay link
+        if pd.notna(blog_link) and isinstance(blog_link, str) and blog_link.strip():
+            col.markdown(
+                f"<div style='text-align:center; margin-top:-0.3rem;'>"
+                f"<a href='{blog_link}' target='_blank' "
+                f"style='text-decoration:none; color:#00eaff; font-weight:bold;'>📖 Learn More</a>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
 
 # =========================
 # MAIN APP
