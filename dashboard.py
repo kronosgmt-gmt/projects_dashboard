@@ -19,7 +19,7 @@ st.set_page_config(
 CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
 
 # =========================
-# CUSTOM CSS
+# CSS GENERAL
 # =========================
 st.markdown("""
 <style>
@@ -86,21 +86,65 @@ body, .stApp {
     background-color: #009ec2;
     transform: translateY(-2px);
 }
-
-.image-thumb {
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-}
-.image-thumb:hover {
-    transform: scale(1.02);
-    box-shadow: 0 0 10px rgba(0,234,255,0.3);
-}
 </style>
 """, unsafe_allow_html=True)
 
 # =========================
-# FUNCTIONS
+# LIGHTBOX ASSETS
+# =========================
+def inject_lightbox_assets():
+    if st.session_state.get("_lightbox_injected"):
+        return
+    st.session_state["_lightbox_injected"] = True
+
+    st.markdown("""
+    <style>
+    .kg-card {
+        position:relative; border-radius:10px; overflow:hidden; margin-bottom:12px;
+        background: rgba(20, 30, 40, 0.4);
+        border: 1px solid rgba(0,234,255,0.15);
+    }
+    .kg-card img {
+        width:100%; display:block; cursor:pointer; transition:transform .25s ease;
+    }
+    .kg-card:hover img { transform: scale(1.02); }
+    .kg-caption {
+        position:absolute; bottom:0; left:0; right:0;
+        background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.6) 100%);
+        color:#fff; padding:8px 10px; font-size:.9rem; text-align:center;
+    }
+    .kg-caption a { color:#00eaff; text-decoration:none; }
+    .kg-caption a:hover { text-decoration:underline; }
+
+    .lightbox {
+      display: none; position: fixed; z-index: 1000; inset:0;
+      background: rgba(0,0,0,.92); padding: 64px 24px 24px;
+    }
+    .lightbox.is-open { display:block; }
+    .lightbox__img {
+      max-width: min(1200px, 95vw); max-height: 80vh; display:block; margin:0 auto; border-radius:12px;
+      box-shadow: 0 0 24px rgba(0,234,255,0.35);
+    }
+    .lightbox__close {
+      position: absolute; top:24px; right:28px; font-size:36px; color:#00eaff; cursor:pointer;
+    }
+    </style>
+    <div id="kg-lightbox" class="lightbox" onclick="this.classList.remove('is-open')">
+      <span class="lightbox__close" onclick="document.getElementById('kg-lightbox').classList.remove('is-open')">×</span>
+      <img id="kg-lightbox-img" class="lightbox__img" />
+    </div>
+    <script>
+      window.kgOpenLightbox = function(src) {
+        const lb = document.getElementById('kg-lightbox');
+        const img = document.getElementById('kg-lightbox-img');
+        img.src = src;
+        lb.classList.add('is-open');
+      }
+    </script>
+    """, unsafe_allow_html=True)
+
+# =========================
+# DATA
 # =========================
 def is_valid_cloudinary_url(url, cloud_name=None):
     if not url or pd.isna(url) or not isinstance(url, str):
@@ -137,7 +181,6 @@ def load_data():
             return []
 
         df['Service_2_list'] = df['Service_2'].apply(clean_services) if 'Service_2' in df.columns else [[] for _ in range(len(df))]
-
         df.dropna(subset=['Longitude', 'Latitude'], inplace=True)
         df = df[(df['Latitude'].between(-90, 90)) & (df['Longitude'].between(-180, 180))]
 
@@ -147,12 +190,14 @@ def load_data():
                 if pd.notna(x) and isinstance(x, str) and x.strip() and not is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME)
                 else x
             )
-
         return df
     except Exception as e:
         st.error(f"⚠️ Error loading data: {e}")
         return pd.DataFrame()
 
+# =========================
+# HELPERS
+# =========================
 def create_service_mapping(df):
     all_services = set()
     for services in df['Service_2_list']:
@@ -178,6 +223,9 @@ def get_project_type_colors(types):
         color_map[t] = fixed_colors.get(t, extra_colors[i % len(extra_colors)])
     return color_map
 
+# =========================
+# MAP
+# =========================
 def create_map(df):
     if df.empty:
         return None
@@ -198,10 +246,9 @@ def create_map(df):
             weight=2
         ).add_to(m)
 
-    # Add legend
     legend_html = '''
-    <div style="position: fixed; bottom: 50px; left: 50px; width: 200px; background: rgba(10,15,20,0.8);
-                border: 2px solid #00eaff; border-radius: 8px; padding: 10px; color: white; font-size: 13px;">
+    <div style="position: fixed; bottom: 50px; left: 50px; width: 200px; background: rgba(10,15,20,0.85);
+                border: 2px solid #00eaff; border-radius: 8px; padding: 10px; color: white; font-size: 13px; z-index:9999;">
         <b>Project Types</b><br>
         <i style="background:#00FFD1;width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;"></i> Residential<br>
         <i style="background:#FF8C42;width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;"></i> Commercial<br>
@@ -211,38 +258,55 @@ def create_map(df):
     m.get_root().html.add_child(folium.Element(legend_html))
     return m
 
+# =========================
+# GALLERY
+# =========================
+def _valid_url(u: str) -> bool:
+    if not isinstance(u, str) or not u.strip():
+        return False
+    try:
+        p = urlparse(u)
+        return p.scheme in ("http", "https") and bool(p.netloc)
+    except Exception:
+        return False
+
 def display_project_gallery(df):
     st.markdown('<div class="section-header">🖼️ Project Gallery</div>', unsafe_allow_html=True)
-    if 'Image' not in df.columns or df['Image'].dropna().empty:
+    if 'Image' not in df.columns:
+        st.write("No images available.")
+        return
+
+    safe_df = df[df['Image'].apply(_valid_url)].copy()
+    if safe_df.empty:
         st.write("No images available.")
         return
 
     cols = st.columns(4)
-    for i, (_, p) in enumerate(df.head(8).iterrows()):
+    max_cards = min(12, len(safe_df))
+    for i, (_, row) in enumerate(safe_df.head(max_cards).iterrows()):
         col = cols[i % 4]
+        name = row.get('Project_Name', f'Project {i+1}')
+        img  = row.get('Image', '')
+        blog = row.get('Blog_Link', None)
+
+        html = f"""
+        <div class="kg-card" onclick="kgOpenLightbox('{img}')">
+          <img src="{img}" alt="{name}">
+          <div class="kg-caption">
+            {name}
+            {f'<br><a href="{blog}" target="_blank">📖 Learn More</a>' if isinstance(blog, str) and blog.strip() else ''}
+          </div>
+        </div>
+        """
         with col:
-            blog_link = p.get('Blog_Link', None)
-            img = p['Image']
-
-            # Imagen miniatura
-            st.image(img, use_container_width=True, caption=p['Project_Name'])
-
-            # Botón para ampliar imagen
-            if st.button(f"🔍 View {p['Project_Name']}", key=f"view_{i}", use_container_width=True):
-                with st.modal(p['Project_Name']):
-                    st.image(img, use_container_width=True)
-                    if pd.notna(blog_link):
-                        st.markdown(
-                            f"[📖 Learn More]({blog_link})",
-                            unsafe_allow_html=True
-                        )
-
+            st.markdown(html, unsafe_allow_html=True)
 
 # =========================
 # MAIN APP
 # =========================
 def main():
     st.markdown('<h1 class="main-header">Kronos GMT – Project Dashboard</h1>', unsafe_allow_html=True)
+    inject_lightbox_assets()
 
     df = load_data()
     if df.empty:
