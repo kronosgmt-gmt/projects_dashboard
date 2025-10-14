@@ -223,12 +223,20 @@ def display_project_gallery(df):
         with col:
             blog_link = p.get('Blog_Link', None)
             img = p['Image']
-            if st.button(p['Project_Name'], key=f"btn_{i}", use_container_width=True):
+
+            # Imagen miniatura
+            st.image(img, use_container_width=True, caption=p['Project_Name'])
+
+            # Botón para ampliar imagen
+            if st.button(f"🔍 View {p['Project_Name']}", key=f"view_{i}", use_container_width=True):
                 with st.modal(p['Project_Name']):
-                    st.image(img, use_container_width=True, caption=p['Project_Name'])
+                    st.image(img, use_container_width=True)
                     if pd.notna(blog_link):
-                        st.markdown(f"[📖 Learn More]({blog_link})", unsafe_allow_html=True)
-            st.image(img, use_container_width=True, caption=p['Project_Name'], output_format="auto")
+                        st.markdown(
+                            f"[📖 Learn More]({blog_link})",
+                            unsafe_allow_html=True
+                        )
+
 
 # =========================
 # MAIN APP
