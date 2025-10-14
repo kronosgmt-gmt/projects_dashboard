@@ -1,35 +1,14 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import numpy as np
-from datetime import datetime
-import folium
-from streamlit_folium import st_folium
-from folium.plugins import MarkerCluster
-from urllib.parse import urlparse
-import os
 import requests
 import io
-import streamlit.components.v1 as components
-import streamlit as st
+import folium
+from streamlit_folium import st_folium
+from urllib.parse import urlparse
 
-# Smartlook tracking
-st.html("""
-<script type='text/javascript'>
-  window.smartlook||(function(d) {
-    var o=smartlook=function(){ o.api.push(arguments)},h=d.getElementsByTagName('head')[0];
-    var c=d.createElement('script');o.api=new Array();c.async=true;c.type='text/javascript';
-    c.charset='utf-8';c.src='https://web-sdk.smartlook.com/recorder.js';h.appendChild(c);
-    })(document);
-    smartlook('init', 'db9d0d226629d4d7abbb32771e2f9195e8a1dba9', { region: 'eu' });
-</script>
-""")
-
-
-# Cloudinary configuration
-CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
-
-# Page configuration with dark mode
+# =========================
+# PAGE CONFIGURATION
+# =========================
 st.set_page_config(
     page_title="Kronos GMT Project's Dashboard",
     page_icon="📊",
@@ -37,70 +16,85 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS with dark mode
+# =========================
+# GLOBAL VARIABLES
+# =========================
+CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
+
+# =========================
+# CUSTOM FUTURISTIC CSS
+# =========================
 st.markdown("""
 <style>
-    .main-header { font-size: 2.5rem; background-color: #1a252f; font-weight: bold; color: #ffffff; text-align: center; margin-bottom: 2rem; }
-    .metric-card { background-color: #2c3e50; padding: 1rem; border-radius: 10px; border-left: 5px solid #07b9d1; margin-bottom: 1rem; }
-    .filter-section { background-color: #34495e; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
-    .stSelectbox > label { font-weight: bold; color: #ffffff; }
-    .section-header { font-size: 1.5rem; font-weight: bold; color: #ffffff; margin: 1rem 0; border-bottom: 2px solid #07b9d1; padding-bottom: 0.5rem; }
-    .cloudinary-image { max-width: 20vw; height: auto; object-fit: cover; border-radius: 5px; cursor: pointer; }
-    .nav-button {
-        display: block;
-        width: 100%;
-        padding: 10px;
-        margin: 5px 0;
-        background-color: #34495e;
-        color: #ffffff;
-        text-decoration: none;
-        border-radius: 5px;
-        text-align: center;
-        border: none;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: bold;
-        text-decoration: none;
-    }
-    .nav-button:hover {
-        background-color: #2c3e50;
-        font-weight: bold;
-        color: #1a252f;
-        text-decoration: none;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .logo-container {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    .stApp {
-        background-color: #1a252f;
-    }
+body, .stApp {
+    background: radial-gradient(circle at 20% 30%, #0b0f14 0%, #121b25 100%);
+    color: #e0e0e0;
+    font-family: 'Segoe UI', sans-serif;
+}
 
-    /* Neon effect for Services expander */
-    @keyframes neonPulse {
-        0% { box-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF; border-color: #00FFFF; }
-        25% { box-shadow: 0 0 10px #00CCFF, 0 0 20px #00CCFF; border-color: #00CCFF; }
-        50% { box-shadow: 0 0 20px #0099FF, 0 0 30px #0099FF; border-color: #0099FF; }
-        75% { box-shadow: 0 0 10px #00CCFF, 0 0 20px #00CCFF; border-color: #00CCFF; }
-        100% { box-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF; border-color: #00FFFF; }
-    }
-    div[data-testid="stExpander"] summary {
-        animation: neonPulse 2s infinite;
-        border: 2px solid #00FFFF;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #1a2332 0%, #2c3e50 100%);
-        padding: 12px;
-        font-weight: bold;
-        text-transform: uppercase;
-        color: #00FFFF;
-        letter-spacing: 1px;
-        text-shadow: 0 0 5px rgba(113, 217, 11, 0.5);
-    }
+.main-header {
+    font-size: 2.5rem;
+    color: #00eaff;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 10px #00eaff;
+    letter-spacing: 1px;
+}
+
+.section-header {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #00eaff;
+    margin: 1.5rem 0 0.5rem 0;
+    border-bottom: 2px solid rgba(0,234,255,0.3);
+    padding-bottom: 0.3rem;
+}
+
+.metric-card {
+    background: rgba(20, 30, 40, 0.5);
+    border: 1px solid rgba(0,234,255,0.2);
+    backdrop-filter: blur(8px);
+    padding: 1.2rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+.metric-card:hover {
+    transform: scale(1.03);
+    border-color: #00eaff;
+    box-shadow: 0 0 15px rgba(0,234,255,0.3);
+}
+
+.filter-section, .stSidebar {
+    background: rgba(20, 30, 40, 0.6);
+    backdrop-filter: blur(6px);
+    border-right: 2px solid rgba(0,234,255,0.2);
+}
+
+.stSelectbox > label {
+    font-weight: bold;
+    color: #00eaff !important;
+}
+
+.stButton button {
+    background-color: #00eaff;
+    color: #0b0f14;
+    font-weight: bold;
+    border-radius: 6px;
+    border: none;
+    transition: 0.3s;
+}
+.stButton button:hover {
+    background-color: #009ec2;
+    transform: translateY(-2px);
+}
 </style>
 """, unsafe_allow_html=True)
 
+# =========================
+# FUNCTIONS
+# =========================
 
 def is_valid_cloudinary_url(url, cloud_name=None):
     if not url or pd.isna(url) or not isinstance(url, str):
@@ -110,8 +104,7 @@ def is_valid_cloudinary_url(url, cloud_name=None):
         return (parsed.netloc == "res.cloudinary.com" and url.startswith(f"https://res.cloudinary.com/{cloud_name}/"))
     return parsed.netloc == "res.cloudinary.com"
 
-
-@st.cache_data(ttl=60)  # Cache for 60 seconds to allow data refresh
+@st.cache_data(ttl=60)
 def load_data():
     url = "https://github.com/kronosgmt-gmt/projects_dashboard/blob/main/proyects.csv"
     try:
@@ -119,43 +112,25 @@ def load_data():
             url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        content = io.StringIO(response.text)
-        df = pd.read_csv(content, encoding='utf-8')
+        df = pd.read_csv(io.StringIO(response.text), encoding='utf-8')
 
-        # Data cleaning and validation
         df.columns = df.columns.str.strip()
         df['Longitude'] = pd.to_numeric(df['Longitude'], errors='coerce')
         df['Latitude'] = pd.to_numeric(df['Latitude'], errors='coerce')
 
-        if 'Customer_Type' in df.columns:
-            df['Customer_Type'] = df['Customer_Type'].fillna('Unknown')
-            # Clean up Customer_Type values - strip whitespace and standardize case
-            df['Customer_Type'] = df['Customer_Type'].str.strip().str.title()
-        else:
+        if 'Customer_Type' not in df.columns:
             df['Customer_Type'] = 'Unknown'
 
         def clean_services(x):
             if pd.isna(x) or not x:
                 return []
-            try:
-                if isinstance(x, str):
-                    if x.startswith('['):
-                        return [s.strip(" '") for s in x.strip("[]").split(',') if s.strip()]
-                    return [s.strip() for s in x.split(',') if s.strip()]
-                return []
-            except:
-                return []
+            if isinstance(x, str):
+                if x.startswith('['):
+                    return [s.strip(" '") for s in x.strip("[]").split(',') if s.strip()]
+                return [s.strip() for s in x.split(',') if s.strip()]
+            return []
 
-        if 'Service_2' in df.columns:
-            df['Service_2_list'] = df['Service_2'].apply(clean_services)
-        else:
-            df['Service_2_list'] = [[] for _ in range(len(df))]
-
-        required = ['project_id', 'Project_Name', 'Longitude', 'Latitude']
-        missing = [col for col in required if col not in df.columns]
-        if missing:
-            st.error(f"❌ Missing columns: {missing}")
-            return None
+        df['Service_2_list'] = df['Service_2'].apply(clean_services) if 'Service_2' in df.columns else [[] for _ in range(len(df))]
 
         df.dropna(subset=['Longitude', 'Latitude'], inplace=True)
         df = df[(df['Latitude'].between(-90, 90)) & (df['Longitude'].between(-180, 180))]
@@ -167,15 +142,10 @@ def load_data():
                 else x
             )
 
-        if df.empty:
-            st.error("❌ No valid projects with coordinates.")
-            return None
-
         return df
     except Exception as e:
-        st.warning(f"⚠️ Failed to load from URL: {str(e)}")
-        return None
-
+        st.error(f"⚠️ Error loading data: {e}")
+        return pd.DataFrame()
 
 def create_service_mapping(df):
     all_services = set()
@@ -184,225 +154,119 @@ def create_service_mapping(df):
             all_services.update(services)
     return sorted([s for s in all_services if s])
 
-
-def filter_data(df, project_type_filter, service_filter):
+def filter_data(df, project_type_filter, service_filter, project_name_filter):
     filtered_df = df.copy()
     if project_type_filter != "All":
         filtered_df = filtered_df[filtered_df['Customer_Type'] == project_type_filter]
     if service_filter != "All":
         filtered_df = filtered_df[filtered_df['Service_2_list'].apply(lambda x: service_filter in x)]
+    if project_name_filter != "All":
+        filtered_df = filtered_df[filtered_df['Project_Name'] == project_name_filter]
     return filtered_df
 
-
-@st.cache_resource
-def get_project_type_colors(customer_types):
-    """Define fixed colors for specific project types"""
-    # Fixed color mapping
-    fixed_colors = {
-        'Commercial': '#ff7f0e',  # Orange
-        'Residential': '#1f77b4', # Blue
-        'Unknown': '#888888'      # Gray
-    }
-    
-    # Additional colors for other types if they exist (excluding blue since it's used for Residential)
-    extra_colors = ['#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#bcbd22', '#17becf']
-    
+def get_project_type_colors(types):
+    fixed_colors = {'Commercial': '#00eaff', 'Residential': '#00ffa2', 'Unknown': '#888888'}
     color_map = {}
-    extra_color_index = 0
-    
-    valid_types = [t for t in customer_types if pd.notna(t)]
-    
-    for customer_type in valid_types:
-        if customer_type in fixed_colors:
-            color_map[customer_type] = fixed_colors[customer_type]
-        else:
-            # Use extra colors for any other types
-            color_map[customer_type] = extra_colors[extra_color_index % len(extra_colors)]
-            extra_color_index += 1
-    
+    extra_colors = ['#ff6f61', '#9b59b6', '#f1c40f']
+    for i, t in enumerate(types):
+        color_map[t] = fixed_colors.get(t, extra_colors[i % len(extra_colors)])
     return color_map
 
-
-def create_simple_map(df):
-    """Map with color coding by project type (no spatial filtering)"""
-    if df.empty or len(df) == 0:
-        st.warning("No data to display on map.")
-        return None
-
-    if 'Customer_Type' not in df.columns:
-        df['Customer_Type'] = 'Unknown'
-
-    df = df.dropna(subset=['Latitude', 'Longitude'])
+def create_map(df):
     if df.empty:
-        st.warning("No valid coordinates for mapping.")
         return None
-
-    # Get unique types and assign colors
-    unique_types = df['Customer_Type'].dropna().unique()
-    color_map = get_project_type_colors(unique_types)
-
-    center_lat = df['Latitude'].mean()
-    center_lon = df['Longitude'].mean()
-
-    m = folium.Map(
-        location=[center_lat, center_lon],
-        zoom_start=6,
-        tiles="OpenStreetMap"
-    )
-    
-    for _, row in enumerate(df.iterrows()):
-        _, row = row
+    color_map = get_project_type_colors(df['Customer_Type'].unique())
+    m = folium.Map(location=[df['Latitude'].mean(), df['Longitude'].mean()], zoom_start=6, tiles="CartoDB dark_matter")
+    for _, row in df.iterrows():
+        color = color_map.get(row['Customer_Type'], '#00eaff')
         popup = f"<b>{row['Project_Name']}</b><br>Type: {row['Customer_Type']}"
-        
-        # Use color based on Customer_Type
-        color = color_map.get(row['Customer_Type'], '#888888')
-
         folium.CircleMarker(
             location=[row['Latitude'], row['Longitude']],
             radius=8,
             popup=popup,
             tooltip=row['Project_Name'],
-            fillColor=color,
-            fillOpacity=0.8,
             color='white',
+            fillColor=color,
+            fillOpacity=0.9,
             weight=2
         ).add_to(m)
-
-    # Add simple legend
-    legend_html = '''
-    <div style="position: fixed; bottom: 50px; left: 50px; width: 180px; background: #1a252f; 
-                border: 2px solid #07b9d1; z-index: 9999; padding: 10px; border-radius: 5px; font-size: 14px;">
-        <p style="color: white; margin: 0 0 5px 0;"><b>Project Types</b></p>
-    '''
-    for project_type, color in color_map.items():
-        legend_html += f'<p style="margin: 3px 0; color: white;"><i class="fa fa-circle" style="color:{color}; margin-right: 8px;"></i> {project_type}</p>'
-    legend_html += '</div>'
-    m.get_root().html.add_child(folium.Element(legend_html))
-
     return m
 
-
-def create_service_distribution(df):
-    if df.empty:
-        return None
-    all_services = [s for services in df['Service_2_list'] for s in services if s]
-    if not all_services:
-        return None
-    counts = pd.Series(all_services).value_counts()
-    fig = px.pie(values=counts.values, names=counts.index, title="Services Distribution")
-    fig.update_traces(textinfo='percent+label')
-    fig.update_layout(
-        paper_bgcolor='#1a242e',
-        plot_bgcolor='#1a242e',
-        font_color="white",
-        title_font_size=16
-    )
-    return fig
-
-
 def display_project_gallery(df):
-    if 'Image' not in df.columns:
-        return
-    projects = df[df['Image'].apply(lambda x: is_valid_cloudinary_url(x, CLOUDINARY_CLOUD_NAME))]
-    if projects.empty:
+    st.markdown('<div class="section-header">🖼️ Project Gallery</div>', unsafe_allow_html=True)
+    if 'Image' not in df.columns or df['Image'].dropna().empty:
         st.write("No images available.")
         return
-    st.markdown('<div class="section-header">🖼️ Project Gallery</div>', unsafe_allow_html=True)
     cols = st.columns(4)
-    for i, (_, p) in enumerate(projects.head(8).iterrows()):
+    for i, (_, p) in enumerate(df.head(8).iterrows()):
         col = cols[i % 4]
         with col:
-            st.image(p['Image'], caption=p['Project_Name'], use_container_width=True)
-            if pd.notna(p.get('Blog_Link')):
-                st.markdown(f"[📖 Learn More]({p['Blog_Link']})", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style='position:relative; border-radius:10px; overflow:hidden; margin-bottom:10px;'>
+              <img src='{p['Image']}' style='width:100%; border-radius:10px; transition:transform 0.3s ease;'>
+              <div style='position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:white; padding:5px; text-align:center; font-size:0.9rem;'>{p['Project_Name']}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-
-def create_navigation_sidebar():
-    with st.sidebar:
-        st.markdown("""
-        <div class="logo-container">
-            <a href="https://kronosgmt.com" target="_blank">
-                <img src="https://res.cloudinary.com/dmbgxvfo0/image/upload/v1754540320/Logos_Kronos_PNG-04_nxdbz3.png" 
-                     style="width: 300px; height: auto; border-radius: 10px; cursor: pointer;">
-            </a>
-        </div>
-        """, unsafe_allow_html=True)
-
-        with st.expander("Services", expanded=False):
-            st.markdown("""<a href="https://www.kronosgmt.com/3D-rendering" target="_blank" class="nav-button">3D Rendering</a>""", unsafe_allow_html=True)
-            st.markdown("""<a href="https://www.kronosgmt.com/CAD-drafting" target="_blank" class="nav-button">CAD Drafting</a>""", unsafe_allow_html=True)
-            st.markdown("""<a href="https://www.kronosgmt.com/takeoffs-schedules" target="_blank" class="nav-button">Takeoffs & Schedules</a>""", unsafe_allow_html=True)
-            st.markdown("""<a href="https://www.kronosgmt.com/GIS-mapping" target="_blank" class="nav-button">GIS Mapping</a>""", unsafe_allow_html=True)
-            st.markdown("""<a href="https://www.kronosgmt.com/automation-workflow-optimization" target="_blank" class="nav-button">Automation & Workflow Optimization</a>""", unsafe_allow_html=True)
-
-        st.markdown("""<a href="https://news.kronosgmt.com/" target="_blank" class="nav-button">News</a>""", unsafe_allow_html=True)
-        st.markdown("""<a href="https://www.kronosgmt.com/#contact" target="_blank" class="nav-button">Contact Us</a>""", unsafe_allow_html=True)
-        st.markdown("---")
-
-
+# =========================
+# MAIN APP
+# =========================
 def main():
-    st.markdown('<h1 class="main-header">Kronos GMT - Project Dashboard</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">Kronos GMT – Project Dashboard</h1>', unsafe_allow_html=True)
 
     df = load_data()
-    if df is None or df.empty:
-        st.error("❌ No data loaded. Check your data source.")
+    if df.empty:
         st.stop()
 
     service_options = create_service_mapping(df)
 
-    # Sidebar filters
     with st.sidebar:
         st.markdown("### 🔍 Filters")
-        
-        # Add a button to refresh data cache
         if st.button("🔄 Refresh Data"):
             st.cache_data.clear()
             st.rerun()
-            
-        types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
-        selected_type = st.selectbox("🏢 Project Type", types, index=0)
+
+        project_types = ["All"] + sorted(df['Customer_Type'].dropna().unique().tolist())
+        selected_type = st.selectbox("🏢 Project Type", project_types, index=0)
+
         services = ["All"] + service_options if service_options else ["All"]
-        selected_service = st.selectbox("🌎 Service", services, index=0)
+        selected_service = st.selectbox("🧩 Service", services, index=0)
 
+        project_names = ["All"] + sorted(df['Project_Name'].dropna().unique().tolist())
+        selected_project = st.selectbox("📁 Project Name", project_names, index=0)
 
-    # Apply filters
-    filtered_df = filter_data(df, selected_type, selected_service)
-
+    filtered_df = filter_data(df, selected_type, selected_service, selected_project)
     if filtered_df.empty:
-        st.error("❌ No projects match the selected filters.")
+        st.warning("No projects match selected filters.")
         st.stop()
 
-    create_navigation_sidebar()
-
-    # Show statistics
     st.markdown(f"📊 **Showing {len(filtered_df)} of {len(df)} total projects**")
 
-    # Layout
     col1, col2 = st.columns([2, 1])
 
     with col1:
         st.markdown('<div class="section-header">📍 Project Locations</div>', unsafe_allow_html=True)
-        map_obj = create_simple_map(filtered_df)
-        if map_obj is not None:
+        map_obj = create_map(filtered_df)
+        if map_obj:
             st_folium(map_obj, use_container_width=True, height=500)
         else:
-            st.warning("⚠️ Map could not be generated.")
+            st.warning("Map could not be generated.")
 
     with col2:
-        st.markdown('<div class="section-header">📊 Services Provided</div>', unsafe_allow_html=True)
-        # Use filtered_df (by type and service filters) not displayed_df (spatial filter)
-        chart = create_service_distribution(filtered_df)
-        if chart:
-            st.plotly_chart(chart, use_container_width=True)
-        else:
-            st.write("No service data available for selected filters.")
+        st.markdown('<div class="section-header">📊 Project Metrics</div>', unsafe_allow_html=True)
+        total_projects = len(filtered_df)
+        total_services = sum([len(s) for s in filtered_df['Service_2_list']])
+        unique_services = len(set([s for sublist in filtered_df['Service_2_list'] for s in sublist]))
 
-    # Project gallery - uses filtered data (by type/service), not spatial filtering
+        st.markdown(f"""
+        <div class="metric-card"><h3 style="color:#00eaff;">{total_projects}</h3><p>Active Projects</p></div>
+        <div class="metric-card"><h3 style="color:#00ffa2;">{unique_services}</h3><p>Unique Services</p></div>
+        <div class="metric-card"><h3 style="color:#f1c40f;">{total_services}</h3><p>Total Services Provided</p></div>
+        """, unsafe_allow_html=True)
+
     display_project_gallery(filtered_df)
-
     st.markdown("---")
     st.caption("© 2025 Kronos GMT | Dashboard by Juan Cano")
-
 
 if __name__ == "__main__":
     main()
