@@ -19,7 +19,7 @@ st.set_page_config(
 CLOUDINARY_CLOUD_NAME = "dmbgxvfo0"
 
 # =========================
-# CUSTOM CSS (CORPORATE FUTURISTIC)
+# CUSTOM CSS + LIGHTBOX JS
 # =========================
 st.markdown("""
 <style>
@@ -86,7 +86,54 @@ body, .stApp {
     background-color: #009ec2;
     transform: translateY(-2px);
 }
+
+/* --- LIGHTBOX IMAGE STYLES --- */
+.lightbox {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  padding-top: 80px;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.9);
+}
+.lightbox-content {
+  margin: auto;
+  display: block;
+  max-width: 80%;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0,234,255,0.5);
+}
+.lightbox-close {
+  position: absolute;
+  top: 40px; right: 60px;
+  color: #00eaff;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.lightbox-close:hover {
+  color: white;
+  transform: scale(1.1);
+}
 </style>
+
+<script>
+function openLightbox(src) {
+  document.getElementById("lightbox").style.display = "block";
+  document.getElementById("lightbox-img").src = src;
+}
+function closeLightbox() {
+  document.getElementById("lightbox").style.display = "none";
+}
+</script>
+
+<div id="lightbox" class="lightbox" onclick="closeLightbox()">
+  <span class="lightbox-close" onclick="closeLightbox()">×</span>
+  <img id="lightbox-img" class="lightbox-content">
+</div>
 """, unsafe_allow_html=True)
 
 # =========================
@@ -198,27 +245,18 @@ def display_project_gallery(df):
         col = cols[i % 4]
         with col:
             blog_link = p.get('Blog_Link', None)
-            if pd.notna(blog_link):
-                st.markdown(f"""
-                <div style='position:relative; border-radius:10px; overflow:hidden; margin-bottom:10px;'>
-                  <a href='{blog_link}' target='_blank'>
-                    <img src='{p['Image']}' style='width:100%; border-radius:10px; transition:transform 0.3s ease;'>
-                    <div style='position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); 
-                                color:white; padding:5px; text-align:center; font-size:0.9rem;'>
-                        {p['Project_Name']}<br><span style="color:#00eaff;">📖 Learn More</span>
-                    </div>
-                  </a>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                <div style='position:relative; border-radius:10px; overflow:hidden; margin-bottom:10px;'>
-                  <img src='{p['Image']}' style='width:100%; border-radius:10px; transition:transform 0.3s ease;'>
-                  <div style='position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); color:white; padding:5px; text-align:center; font-size:0.9rem;'>
-                    {p['Project_Name']}
-                  </div>
-                </div>
-                """, unsafe_allow_html=True)
+            image_html = f"""
+            <div style='position:relative; border-radius:10px; overflow:hidden; margin-bottom:10px;'>
+              <img src='{p['Image']}' onclick="openLightbox('{p['Image']}')" 
+                   style='width:100%; border-radius:10px; cursor:pointer; transition:transform 0.3s ease;'>
+              <div style='position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.6); 
+                          color:white; padding:5px; text-align:center; font-size:0.9rem;'>
+                  {p['Project_Name']}
+                  {"<br><a href='" + blog_link + "' target='_blank' style='color:#00eaff; text-decoration:none;'>📖 Learn More</a>" if pd.notna(blog_link) else ""}
+              </div>
+            </div>
+            """
+            st.markdown(image_html, unsafe_allow_html=True)
 
 # =========================
 # MAIN APP
@@ -244,7 +282,7 @@ def main():
         services = ["All"] + service_options if service_options else ["All"]
         selected_service = st.selectbox("🧩 Service", services, index=0)
 
-        # Filter project names dynamically based on previous selections
+        # Dynamic project names
         temp_filtered = filter_data(df, selected_type, selected_service, "All")
         project_names = ["All"] + sorted(temp_filtered['Project_Name'].dropna().unique().tolist())
         selected_project = st.selectbox("📁 Project Name", project_names, index=0)
