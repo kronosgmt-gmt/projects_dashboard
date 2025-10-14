@@ -117,29 +117,55 @@ def inject_lightbox_assets():
     .kg-caption a:hover { text-decoration:underline; }
 
     .lightbox {
-      display: none; position: fixed; z-index: 1000; inset:0;
+      display: none; position: fixed; z-index: 10000; inset:0;
       background: rgba(0,0,0,.92); padding: 64px 24px 24px;
     }
     .lightbox.is-open { display:block; }
     .lightbox__img {
-      max-width: min(1200px, 95vw); max-height: 80vh; display:block; margin:0 auto; border-radius:12px;
+      max-width: min(95vw, 1600px); max-height: 85vh; display:block;
+      margin:0 auto; border-radius:12px;
       box-shadow: 0 0 24px rgba(0,234,255,0.35);
+      transition: all .3s ease;
     }
     .lightbox__close {
       position: absolute; top:24px; right:28px; font-size:36px; color:#00eaff; cursor:pointer;
+      z-index:10001;
     }
     </style>
+
     <div id="kg-lightbox" class="lightbox" onclick="this.classList.remove('is-open')">
       <span class="lightbox__close" onclick="document.getElementById('kg-lightbox').classList.remove('is-open')">×</span>
       <img id="kg-lightbox-img" class="lightbox__img" />
     </div>
+
     <script>
       window.kgOpenLightbox = function(src) {
         const lb = document.getElementById('kg-lightbox');
         const img = document.getElementById('kg-lightbox-img');
         img.src = src;
         lb.classList.add('is-open');
-      }
+
+        // Intentar entrar a pantalla completa automáticamente
+        const el = lb;
+        if (el.requestFullscreen) {
+            el.requestFullscreen().catch(()=>{});
+        } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+        } else if (el.msRequestFullscreen) {
+            el.msRequestFullscreen();
+        }
+      };
+
+      // Salir de pantalla completa al cerrar
+      window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+              const lb = document.getElementById('kg-lightbox');
+              lb.classList.remove('is-open');
+              if (document.fullscreenElement) {
+                  document.exitFullscreen().catch(()=>{});
+              }
+          }
+      });
     </script>
     """, unsafe_allow_html=True)
 
